@@ -27,7 +27,7 @@ WSL (Windows Subsystem for Linux) ইনস্ট্যান্স পরিচ
 ### পরিচিতি এবং মেনু কলাপস
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 অপারেশন ডেমো

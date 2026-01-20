@@ -27,7 +27,7 @@ WSL (Windows Subsystem for Linux) örneklerini yönetmek için modern, yüksek p
 ### Hakkında ve Menü daraltma
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Çalışma Gösterimi

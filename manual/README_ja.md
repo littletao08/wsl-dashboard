@@ -27,7 +27,7 @@
 ### バージョン情報 ＆ メニューの折りたたみ
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 操作デモ

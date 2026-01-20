@@ -27,7 +27,7 @@ Una dashboard moderna, performante e leggera per la gestione delle istanze WSL (
 ### Informazioni e menu compresso
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Demo di Funzionamento

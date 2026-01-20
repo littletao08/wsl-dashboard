@@ -27,7 +27,7 @@
 ### О программе и сворачиваемое меню
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Демонстрация работы

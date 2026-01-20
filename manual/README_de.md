@@ -27,7 +27,7 @@ Ein modernes, leistungsstarkes und leichtgewichtiges Dashboard zur Verwaltung vo
 ### Über & Menü einklappen
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Bedienungs-Demo

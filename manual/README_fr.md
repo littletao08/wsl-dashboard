@@ -27,7 +27,7 @@ Un tableau de bord moderne, performant et léger pour la gestion des instances W
 ### À propos et menu réduit
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Démonstration

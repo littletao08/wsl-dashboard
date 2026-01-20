@@ -27,7 +27,7 @@ Um painel de gestão de instâncias WSL (Windows Subsystem for Linux) moderno, d
 ### Sobre & Menu recolhido
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Demonstração de Funcionamento

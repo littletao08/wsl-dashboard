@@ -27,7 +27,7 @@ Dashboard manajemen instance WSL (Windows Subsystem for Linux) yang modern, berk
 ### Tentang & Menu ciutkan
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Demo Operasi

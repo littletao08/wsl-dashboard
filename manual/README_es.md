@@ -27,7 +27,7 @@ Un panel de gestión de instancias de WSL (Windows Subsystem for Linux) moderno,
 ### Acerca de y menú colapsado
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 Demostración de Funcionamiento

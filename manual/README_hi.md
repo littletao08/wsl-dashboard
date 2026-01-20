@@ -27,7 +27,7 @@ WSL (Windows Subsystem for Linux) इंस्टेंस प्रबंधन
 ### परिचय और संक्षिप्त मेनू
 <p align="center">
   <img src="../assets/screenshot/about.png" width="48%" />
-  <img src="assets/screenshot/collapsed.png" width="48%" />
+  <img src="../assets/screenshot/collapsed.png" width="48%" />
 </p>
 
 ## 🎬 ऑपरेशन डेमो
