@@ -14,9 +14,11 @@ export component MainView inherits VerticalLayout {
     callback vscode_distro(string);
     callback open_export_dialog(string);
     callback open_clone_dialog(string);
+    callback open_move_dialog(string);
     callback edit_bashrc_distro(string);
     callback information_clicked(string);
     callback delete_clicked(string);
+    callback settings_clicked(string);
     in-out property <string> distro_to_delete;
     in-out property <bool> show_delete_confirmation;
     vertical-stretch: 1;
@@ -37,6 +39,7 @@ export component MainView inherits VerticalLayout {
                 alignment: start;
                 for d in distros: DistroCard {
                     distro: d;
+                    sole_distro: distros.length == 1;
                     start_clicked => {
                         root.start_distro(d.name);
                     }
@@ -68,6 +71,12 @@ export component MainView inherits VerticalLayout {
                     }
                     clone_clicked => {
                         root.open_clone_dialog(d.name);
+                    }
+                    move_clicked => {
+                        root.open_move_dialog(d.name);
+                    }
+                    settings_clicked => {
+                        root.settings_clicked(d.name);
                     }
                     information_clicked => {
                         root.information_clicked(d.name);

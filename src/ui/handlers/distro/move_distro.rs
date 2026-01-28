@@ -1,0 +1,268 @@
+use std::sync::Arc;
+use std::path::PathBuf;
+use tokio::sync::Mutex;
+use tracing::{info, warn};
+use slint::{ComponentHandle, Model};
+use crate::{AppWindow, AppState, i18n};
+use crate::ui::data::refresh_distros_ui;
+
+pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    let ah = app_handle.clone();
+    let _as_ptr_open = app_state.clone();
+    app.on_open_move_dialog(move |name| {
+        info!("Operation: Open move dialog - {}", name);
+        if let Some(app) = ah.upgrade() {
+            if app.get_is_installing() || app.get_is_exporting() || app.get_is_cloning() || app.get_is_moving() {
+                app.set_current_message(i18n::t("dialog.operation_in_progress").into());
+                app.set_show_message_dialog(true);
+                return;
+            }
+
+            let name_str = name.to_string();
+            let distro_location = app.get_distro_location().to_string();
+            let target_path = std::path::Path::new(&distro_location)
+                .join(&name_str)
+                .to_string_lossy()
+                .to_string();
+
+            app.set_move_source_name(name_str.clone().into());
+            // Note: move_target_name is still used internally but the input is removed from UI
+            app.set_move_target_name(name_str.clone().into());
+            app.set_move_target_path(target_path.into());
+            app.set_move_original_path("".into());
+            app.set_move_error("".into());
+            app.set_show_move_dialog(true);
+        }
+    });
+
+    let ah = app_handle.clone();
+    app.on_select_move_folder(move || {
+        if let Some(path) = rfd::FileDialog::new()
+            .set_title(i18n::t("dialog.select_move_dir"))
+            .pick_folder()
+        {
+            if let Some(app) = ah.upgrade() {
+                app.set_move_target_path(path.to_string_lossy().to_string().into());
+            }
+        }
+    });
+
+    let ah = app_handle.clone();
+    let as_ptr = app_state.clone();
+    app.on_confirm_move(move |source_name, _target_name, target_path| {
+        info!("Operation: Confirm move - Source: {}, Target: {}, Path: {}", source_name, _target_name, target_path);
+        let ah = match ah.upgrade() {
+            Some(a) => a,
+            None => return,
+        };
+
+        if ah.get_is_installing() || ah.get_is_exporting() || ah.get_is_cloning() || ah.get_is_moving() {
+            return;
+        }
+
+        // 1. Sync Validations
+        let p = std::path::Path::new(target_path.as_str());
+        if p.exists() {
+            if p.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(p) {
+                    if entries.count() > 0 {
+                        ah.set_move_error(i18n::t("dialog.dir_not_empty").into());
+                        return;
+                    }
+                }
+            } else {
+                ah.set_move_error(i18n::t("dialog.path_is_not_dir").into());
+                return;
+            }
+        } else {
+            if let Err(e) = std::fs::create_dir_all(p) {
+                ah.set_move_error(i18n::tr("dialog.mkdir_failed", &[e.to_string()]).into());
+                return;
+            }
+        }
+
+        // Get distro version (Sync)
+        let mut version = "2".to_string();
+        let distros = ah.get_distros();
+        for i in 0..distros.row_count() {
+            if let Some(d) = distros.row_data(i) {
+                if d.name == source_name {
+                    version = d.version.to_string();
+                    break;
+                }
+            }
+        }
+
+        ah.set_move_error("".into());
+        // Do not close dialog yet, we need to check current path asynchronously
+        
+        let ah_move = ah.as_weak();
+        let as_ptr = as_ptr.clone();
+        let source_name = source_name.to_string();
+        let target_path = target_path.to_string();
+        let target_name = _target_name.to_string();
+
+        let _ = slint::spawn_local(async move {
+            if let Some(app) = ah_move.upgrade() {
+                app.set_show_move_dialog(false);
+                app.set_is_moving(true);
+                app.set_show_operation(true);
+                app.set_operation_text(i18n::t("operation.moving").into());
+            }
+
+            // 3. Stop distro
+            {
+                let state = as_ptr.lock().await;
+                let _ = state.wsl_dashboard.stop_distro(&source_name).await;
+            }
+
+            // Give WSL service a small moment to release file locks
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+            let result = if version == "2" {
+                // WSL 2 Move
+                let mut move_res = crate::wsl::models::WslCommandResult::error("".into(), "".into());
+                for attempt in 1..=3 {
+                    if attempt > 1 {
+                        info!("WSL 2 Move: Retry attempt {} after delay...", attempt);
+                        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+                    }
+                    
+                    let state = as_ptr.lock().await;
+                    move_res = state.wsl_dashboard.executor().move_distro(&source_name, &target_path).await;
+                    
+                    if move_res.success {
+                        break;
+                    }
+                    
+                    // If it's a sharing violation, we should definitely retry
+                    if move_res.output.contains("ERROR_SHARING_VIOLATION") || move_res.output.contains("0x80070020") {
+                        continue;
+                    }
+                    // If it failed for other reasons, maybe break early? 
+                    // But retrying 3 times is generally safe for this operation.
+                }
+                move_res
+            } else {
+                // WSL 1 Move
+                move_wsl1(ah_move.clone(), as_ptr.clone(), &source_name, &target_name, &target_path).await
+            };
+
+            if let Some(app) = ah_move.upgrade() {
+                app.set_show_operation(false);
+                app.set_is_moving(false);
+                if result.success {
+                    app.set_current_message(i18n::tr("dialog.move_success", &[source_name, target_path]).into());
+                } else {
+                    let err = result.error.unwrap_or_else(|| i18n::t("dialog.error"));
+                    if result.output == "BACKUP_SAVED" {
+                        app.set_current_message(i18n::tr("dialog.move_failed_backup", &[err.clone()]).into());
+                        app.set_current_message_link(i18n::t("distro.explorer").into());
+                        // Set URL to the parent directory of the backup file for opening in explorer
+                        let backup_path = std::path::Path::new(&err);
+                        if let Some(parent) = backup_path.parent() {
+                             app.set_current_message_url(parent.to_string_lossy().to_string().into());
+                        } else {
+                             app.set_current_message_url(err.into());
+                        }
+                    } else {
+                        app.set_current_message(i18n::tr("dialog.move_failed", &[err]).into());
+                    }
+                }
+                app.set_show_message_dialog(true);
+                refresh_distros_ui(ah_move.clone(), as_ptr.clone()).await;
+            }
+        });
+    });
+}
+
+async fn move_wsl1(
+    _ah: slint::Weak<AppWindow>, 
+    as_ptr: Arc<Mutex<AppState>>, 
+    source_name: &str, 
+    target_name: &str, 
+    target_path: &str
+) -> crate::wsl::models::WslCommandResult<String> {
+    use crate::wsl::models::WslCommandResult;
+    
+    // 1. Export
+    let (temp_dir, temp_file_str) = {
+        let state = as_ptr.lock().await;
+        let temp_dir = PathBuf::from(&state.config_manager.get_settings().temp_location);
+        let temp_file = temp_dir.join(format!("wsl_move_{}.tar", uuid::Uuid::new_v4()));
+        (temp_dir, temp_file.to_string_lossy().to_string())
+    };
+
+    let _ = std::fs::create_dir_all(&temp_dir);
+
+    info!("WSL1 Move: Exporting '{}' to '{}'...", source_name, temp_file_str);
+    let export_result = {
+        let state = as_ptr.lock().await;
+        state.wsl_dashboard.export_distro(source_name, &temp_file_str).await
+    };
+
+    if !export_result.success {
+        let _ = std::fs::remove_file(&temp_file_str);
+        return export_result;
+    }
+
+    // Verify file size
+    if let Ok(metadata) = std::fs::metadata(&temp_file_str) {
+        if metadata.len() == 0 {
+            let _ = std::fs::remove_file(&temp_file_str);
+            return WslCommandResult::error("".into(), "Exported file is empty".into());
+        }
+    } else {
+        return WslCommandResult::error("".into(), "Failed to verify exported file".into());
+    }
+
+    // 2. Unregister
+    info!("WSL1 Move: Unregistering '{}'...", source_name);
+    let unregister_result = {
+        let state = as_ptr.lock().await;
+        // user requested NOT to delete appx, so we use execute_command directly instead of dashboard.delete_distro
+        state.wsl_dashboard.executor().execute_command(&["--unregister", source_name]).await
+    };
+
+    if !unregister_result.success {
+        let _ = std::fs::remove_file(&temp_file_str);
+        return unregister_result;
+    }
+
+    // 3. Import
+    info!("WSL1 Move: Importing to '{}' at '{}'...", target_name, target_path);
+    let import_result = {
+        let state = as_ptr.lock().await;
+        state.wsl_dashboard.import_distro(target_name, target_path, &temp_file_str).await
+    };
+
+    if !import_result.success {
+        // Return success=false but with a special flag and the backup path
+        return WslCommandResult {
+            success: false,
+            output: "BACKUP_SAVED".into(),
+            error: Some(temp_file_str),
+            data: None,
+        };
+    }
+
+    // 4. Verify exist
+    let verify_result = {
+        let state = as_ptr.lock().await;
+        state.wsl_dashboard.executor().execute_command(&["-l", "-v"]).await
+    };
+
+    if verify_result.success && verify_result.output.contains(target_name) {
+        info!("WSL1 Move: Success, cleaning up temp file");
+        let _ = std::fs::remove_file(&temp_file_str);
+        WslCommandResult::success("Move successful".into(), None)
+    } else {
+        warn!("WSL1 Move: Import appeared successful but distro not found in list");
+        WslCommandResult {
+            success: false,
+            output: "BACKUP_SAVED".into(),
+            error: Some(temp_file_str),
+            data: None,
+        }
+    }
+}

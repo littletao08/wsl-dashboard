@@ -22,6 +22,11 @@ impl ConfigManager {
         home_dir.join(".wsldashboard").join("settings.toml")
     }
 
+    fn get_instances_path() -> PathBuf {
+        let home_dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+        home_dir.join(".wsldashboard").join("instances.toml")
+    }
+
     // Initialize configuration manager
     pub async fn new() -> Self {
         let config_path = Self::get_config_path();
@@ -192,6 +197,77 @@ impl ConfigManager {
         self.config.settings.check_time = chrono::Utc::now().timestamp_millis().to_string();
         Self::save_config(&self.config_path, &mut self.config)?;
         info!("Updated check-time to: {}", self.config.settings.check_time);
+        Ok(())
+    }
+
+    // --- Instances Config Management ---
+
+    fn load_instances() -> InstancesContainer {
+        let path = Self::get_instances_path();
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(mut container) = toml::from_str::<InstancesContainer>(&content) {
+                    let old_version = container.common.setting_version;
+                    migration::migrate_instances_config(&mut container);
+                    
+                    // If version was upgraded, save it back immediately to complete fields
+                    if old_version < INSTANCES_VERSION {
+                        let _ = Self::save_instances_to_disk(&path, &container);
+                    }
+                    return container;
+                }
+            }
+        }
+        InstancesContainer::new()
+    }
+
+    fn save_instances_to_disk(path: &std::path::Path, container: &InstancesContainer) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+
+        let mut toml_string = toml::to_string_pretty(container)?;
+        // Ensure UNIX line endings 
+        toml_string = toml_string.replace("\r\n", "\n");
+        
+        fs::write(path, toml_string)?;
+        Ok(())
+    }
+
+    pub fn get_instance_config(&self, distro_name: &str) -> DistroInstanceConfig {
+        let mut container = Self::load_instances();
+        if let Some(config) = container.instances.get(distro_name) {
+            config.clone()
+        } else {
+            // Initialize with default if not found
+            let default_config = DistroInstanceConfig::default();
+            container.instances.insert(distro_name.to_string(), default_config.clone());
+            // Save immediately as requested
+            let _ = self.update_instance_config(distro_name, default_config.clone());
+            default_config
+        }
+    }
+
+    pub fn update_instance_config(&self, distro_name: &str, config: DistroInstanceConfig) -> Result<(), Box<dyn std::error::Error>> {
+        let mut container = Self::load_instances();
+        container.instances.insert(distro_name.to_string(), config);
+        container.common.modify_time = chrono::Utc::now().timestamp_millis().to_string();
+        container.common.setting_version = INSTANCES_VERSION;
+
+        let path = Self::get_instances_path();
+        Self::save_instances_to_disk(&path, &container)?;
+        info!("✅ Instance configuration for '{}' saved successfully", distro_name);
+        Ok(())
+    }
+
+    pub fn remove_instance_config(&self, distro_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let mut container = Self::load_instances();
+        if container.instances.remove(distro_name).is_some() {
+            container.common.modify_time = chrono::Utc::now().timestamp_millis().to_string();
+            let path = Self::get_instances_path();
+            Self::save_instances_to_disk(&path, &container)?;
+            info!("✅ Removed instance configuration for '{}'", distro_name);
+        }
         Ok(())
     }
 }

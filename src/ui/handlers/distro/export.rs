@@ -10,6 +10,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
     app.on_open_export_dialog(move |name| {
         info!("Operation: Open export dialog - {}", name);
         if let Some(app) = ah.upgrade() {
+            if app.get_is_exporting() || app.get_is_cloning() || app.get_is_moving() {
+                app.set_current_message(i18n::t("dialog.operation_in_progress").into());
+                app.set_show_message_dialog(true);
+                return;
+            }
             app.set_export_distro_name(name.into());
             // Default target directory to distro_location from settings
             let default_path = app.get_distro_location();
@@ -45,6 +50,10 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             return;
         }
 
+        if ah.get_is_exporting() || ah.get_is_cloning() || ah.get_is_moving() {
+            return;
+        }
+
         ah.set_export_error("".into());
         ah.set_show_export_dialog(false);
         
@@ -56,6 +65,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let _ = slint::spawn_local(async move {
             // Show exporting indicator
             if let Some(app) = ah_clone.upgrade() {
+                app.set_is_exporting(true);
                 app.set_operation_text(i18n::t("operation.exporting").into());
                 app.set_show_operation(true);
             }
@@ -80,6 +90,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             if let Some(app) = ah_clone.upgrade() {
                 // Hide exporting indicator
                 app.set_show_operation(false);
+                app.set_is_exporting(false);
                 
                 if result.success {
                     app.set_current_message(i18n::tr("dialog.export_success", &[distro_source.clone(), export_file_str.clone()]).into());

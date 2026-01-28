@@ -2,10 +2,12 @@ import {
     ConfirmationDialog,
     ExportDialog,
     CloneDialog,
+    MoveDialog,
     MessageDialog,
     CheckUpdateDialog,
     StoreInstallWarnDialog,
     InformationDialog,
+    SettingsDialog,
     OperationOverlay,
     RootFSHelpDialog,
     VSCodeStartupDialog,
@@ -17,12 +19,14 @@ export component ModalManager inherits Rectangle {
     in property <bool> show_delete: false;
     in property <bool> show_export: false;
     in property <bool> show_clone: false;
+    in property <bool> show_move: false;
     in property <bool> show_message: false;
     in property <bool> show_update: false;
     in property <bool> show_install_warn: false;
     in property <bool> show_expire: false;
     in property <bool> show_operation: false;
     in property <bool> show_information: false;
+    in-out property <bool> show_settings: false;
     in property <bool> show_rootfs_help: false;
     in property <bool> show_vscode_startup: false;
     in property <bool> is_installing: false;
@@ -36,8 +40,25 @@ export component ModalManager inherits Rectangle {
     in-out property <string> clone_target_name;
     in-out property <string> clone_target_path;
     in property <string> clone_error: "";
+    in property <string> move_source_name: "";
+    in-out property <string> move_target_name;
+    in-out property <string> move_target_path;
+    in property <string> move_error: "";
     in property <string> message_text;
+    in property <string> message_link_text: "";
+    in property <string> message_action_text: "";
     in property <string> operation_text: "Processing...";
+    in property <string> settings_target_name: "";
+    in-out property <string> settings_terminal_dir: "~";
+    in-out property <string> settings_vscode_dir: "/home";
+    in-out property <bool> settings_is_default: false;
+    in-out property <bool> settings_lock_default: false;
+    in-out property <bool> settings_autostart: false;
+    in-out property <string> settings_startup_script: "";
+    in property <string> settings_terminal_dir_error: "";
+    in property <string> settings_vscode_dir_error: "";
+    in property <string> settings_startup_script_error: "";
+    in property <string> settings_default_error: "";
     in property <Information> information;
     in property <[RootFSHelpItem]> rootfs_help_list;
 
@@ -50,7 +71,12 @@ export component ModalManager inherits Rectangle {
     callback confirm_clone(string, string);
     callback cancel_clone();
     callback browse_clone();
+    callback confirm_move(string);
+    callback cancel_move();
+    callback browse_move();
     callback close_message();
+    callback message_link_clicked();
+    callback message_action_clicked();
     callback clone_name_changed(string);
     callback download_update();
     callback close_update();
@@ -59,6 +85,8 @@ export component ModalManager inherits Rectangle {
     callback close_expire();
     callback close_operation();
     callback close_information();
+    callback confirm_settings(string, string, string, bool, bool, string);
+    callback close_settings();
     callback close_rootfs_help();
     callback close_vscode_startup();
     callback open_url(string);
@@ -112,12 +140,42 @@ export component ModalManager inherits Rectangle {
             root.confirm_clone(name, path);
         }
     }
-    if (show_message): MessageDialog {
+    if (show_move): MoveDialog {
         width: 100%;
         height: 100%;
-        message: root.message_text;
-        close => {
-            root.close_message();
+        distro_name: move_source_name;
+        move_path <=> root.move_target_path;
+        error_msg: move_error;
+        enabled: !root.is_installing;
+        cancel => {
+            root.cancel_move();
+        }
+        browse => {
+            root.browse_move();
+        }
+        confirm(path) => {
+            root.confirm_move(path);
+        }
+    }
+    if (show_message): Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #00000080;
+        TouchArea { /* prevent interaction with elements behind */ }
+
+        MessageDialog {
+            message: root.message_text;
+            link_text: root.message_link_text;
+            action_text: root.message_action_text;
+            close => {
+                root.close_message();
+            }
+            link_clicked => {
+                root.message_link_clicked();
+            }
+            action_clicked => {
+                root.message_action_clicked();
+            }
         }
     }
     if (show_update): CheckUpdateDialog {
@@ -173,6 +231,27 @@ export component ModalManager inherits Rectangle {
         }
         open_path(url) => {
             root.open_url(url);
+        }
+    }
+    if (show_settings): SettingsDialog {
+        width: 100%;
+        height: 100%;
+        distro_name: settings_target_name;
+        terminal_dir <=> settings_terminal_dir;
+        vscode_dir <=> settings_vscode_dir;
+        is_default <=> settings_is_default;
+        lock_default: settings_lock_default;
+        autostart <=> settings_autostart;
+        startup_script <=> settings_startup_script;
+        terminal_dir_error: settings_terminal_dir_error;
+        vscode_dir_error: settings_vscode_dir_error;
+        startup_script_error: settings_startup_script_error;
+        default_error: settings_default_error;
+        save => {
+            root.confirm_settings(root.settings_target_name, root.settings_terminal_dir, root.settings_vscode_dir, root.settings_is_default, root.settings_autostart, root.settings_startup_script);
+        }
+        close => {
+            root.close_settings();
         }
     }
     if (show_rootfs_help): RootFSHelpDialog {

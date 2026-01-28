@@ -1,5 +1,6 @@
 use crate::wsl::models::{WslCommandResult, WslDistro, WslInformation};
 pub use crate::wsl::executor::WslCommandExecutor;
+use crate::config::ConfigManager;
 
 impl WslCommandExecutor {
     // Get WSL subsystem list
@@ -23,8 +24,13 @@ impl WslCommandExecutor {
     }
 
     // Delete specified WSL subsystem
-    pub async fn delete_distro(&self, distro_name: &str) -> WslCommandResult<String> {
-        crate::wsl::ops::lifecycle::delete_distro(self, distro_name).await
+    pub async fn delete_distro(&self, config_manager: &ConfigManager, distro_name: &str) -> WslCommandResult<String> {
+        crate::wsl::ops::lifecycle::delete_distro(self, config_manager, distro_name).await
+    }
+
+    // Move specified WSL subsystem
+    pub async fn move_distro(&self, distro_name: &str, new_path: &str) -> WslCommandResult<String> {
+        crate::wsl::ops::lifecycle::move_distro(self, distro_name, new_path).await
     }
     
     // Export specified WSL subsystem
@@ -53,13 +59,13 @@ impl WslCommandExecutor {
     }
 
     // Open VS Code in distribution
-    pub async fn open_distro_vscode(&self, distro_name: &str) -> WslCommandResult<String> {
-        crate::wsl::ops::ui::open_distro_vscode(self, distro_name).await
+    pub async fn open_distro_vscode(&self, distro_name: &str, working_dir: &str) -> WslCommandResult<String> {
+        crate::wsl::ops::ui::open_distro_vscode(self, distro_name, working_dir).await
     }
 
     // Open terminal in distribution
-    pub async fn open_distro_terminal(&self, distro_name: &str) -> WslCommandResult<String> {
-        crate::wsl::ops::ui::open_distro_terminal(self, distro_name).await
+    pub async fn open_distro_terminal(&self, distro_name: &str, working_dir: &str) -> WslCommandResult<String> {
+        crate::wsl::ops::ui::open_distro_terminal(self, distro_name, working_dir).await
     }
 
     // Open specified path in distribution
@@ -70,5 +76,10 @@ impl WslCommandExecutor {
     // Get information of distribution
     pub async fn get_distro_information(&self, distro_name: &str) -> WslCommandResult<WslInformation> {
         crate::wsl::ops::info::get_distro_information(self, distro_name).await
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_distro_install_location(&self, distro_name: &str) -> WslCommandResult<String> {
+        crate::wsl::ops::info::get_distro_install_location(self, distro_name).await
     }
 }

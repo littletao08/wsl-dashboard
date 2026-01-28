@@ -47,10 +47,11 @@ Voici une démonstration de WSL Dashboard en action :
 - Interface graphique intuitive avec support du mode sombre et animations fluides.
 - Gestion en un clic de toutes vos distributions WSL (Démarrer, Arrêter, Terminer, Désenregistrer).
 - Accès rapide aux terminaux des distributions, à VS Code et à l'Explorateur de fichiers.
+- Paramètres de distribution complets : Définir par défaut, démarrage automatique au boot et chemins de répertoire personnalisés.
 - Surveillance et affichage en temps réel de l'état des instances WSL.
 - Exportation et sauvegarde vers des archives `.tar` ou `.tar.gz` compressées.
 - Importation et clonage d'instances à partir de sauvegardes ou de distributions existantes.
-- Relocalisation des instances WSL volumineuses (migration VHDX) vers d'autres disques pour libérer de l'espace sur C:.
+- Déplacer la distribution vers n'importe quel répertoire spécifié (migration VHDX) pour économiser de l'espace sur le disque C:.
 - Installation intelligente de distributions depuis le Microsoft Store ou GitHub.
 - Assistant de téléchargement RootFS intégré pour les installations manuelles.
 - Informations détaillées sur l'emplacement du fichier VHDX, la taille du disque virtuel et l'utilisation réelle du disque.
@@ -108,11 +109,12 @@ Assurez-vous d'avoir installé la chaîne d'outils Rust (Rust 1.92+ ou plus réc
 
 ## 🧭 Aperçu de l'utilisation
 
-- **Gérer les distributions existantes** : Démarrez, arrêtez, terminez ou désenregistrez n'importe quelle distribution WSL depuis la vue principale.
+- **Gérer les distributions existantes** : Démarrez, arrêtez, terminez, désenregistrez ou définissez comme distribution par défaut depuis la vue principale.
+- **Configurer les distributions** : définir le comportement de démarrage automatique et personnaliser les répertoires de lancement Terminal/VS Code.
 - **Ouvrir les outils rapidement** : Lancez une distribution dans votre terminal, VS Code ou l'Explorateur de fichiers en un seul clic.
 - **Créer de nouvelles instances** : Utilisez la vue d'ajout d'instance pour installer depuis le Microsoft Store, télécharger des images RootFS ou cloner des distributions existantes.
 - **Sauvegarde et restauration** : Exportez des distributions vers des archives `.tar` / `.tar.gz` et importez-les plus tard ou sur une autre machine.
-- **Déplacer le stockage** : Relocalisez les fichiers VHDX volumineux vers un autre lecteur pour économiser de l'espace sur le disque C:.
+- **Déplacer la distribution** : déplacer la distribution vers le répertoire spécifié pour une meilleure gestion du stockage.
 - **Surveiller l'état** : Gardez un œil sur l'état des distributions et l'utilisation du stockage en temps réel.
 
 ## ⚙️ Configuration & Logs

@@ -49,10 +49,11 @@ Hier ist eine Demonstration des WSL Dashboards in Aktion:
 - Intuitive Benutzeroberfläche mit Unterstützung für den Dunkelmodus und flüssigen Animationen.
 - Ein-Klick-Verwaltung für alle Ihre WSL-Distributionen (Starten, Stoppen, Beenden, Deregistrieren).
 - Schneller Zugriff auf Distributions-Terminals, VS Code und den Datei-Explorer.
+- Umfassende Distributions-Einstellungen: Als Standard festlegen, automatischer Start beim Booten und benutzerdefinierte Verzeichnispfade.
 - Echtzeit-Statusüberwachung und -anzeige der WSL-Instanzen.
 - Export und Backup in `.tar`- oder komprimierte `.tar.gz`-Archive.
 - Import und Klonen von Instanzen aus Backups oder bestehenden Distributionen.
-- Verschieben großer WSL-Instanzen (VHDX-Migration) auf andere Festplatten, um Platz auf Laufwerk C: zu sparen.
+- Distribution in ein beliebiges angegebenes Verzeichnis verschieben (VHDX-Migration), um Platz auf Laufwerk C: zu sparen.
 - Intelligente Installation von Distributionen aus dem Microsoft Store oder von GitHub.
 - Integrierter RootFS-Download-Assistent für manuelle Installationen.
 - Detaillierte Einblicke in den VHDX-Dateispeicherort, die Größe des virtuellen Datenträgers und die tatsächliche Festplattenbelegung.
@@ -110,11 +111,12 @@ Stellen Sie sicher, dass Sie die Rust-Toolchain (Rust 1.92+ oder neuer) installi
 
 ## 🧭 Nutzungsübersicht
 
-- **Vorhandene Distributionen verwalten**: Starten, Stoppen, Beenden oder Deregistrieren einer WSL-Distribution aus der Hauptansicht.
+- **Vorhandene Distributionen verwalten**: Starten, Stoppen, Beenden, Deregistrieren oder als Standard-Distribution festlegen aus der Hauptansicht.
+- **Distributionen konfigurieren**: Autostart-Verhalten festlegen und Startverzeichnisse für Terminal/VS Code anpassen.
 - **Werkzeuge schnell öffnen**: Starten Sie eine Distribution in Ihrem Terminal, in VS Code oder im Datei-Explorer mit einem einzigen Klick.
 - **Neue Instanzen erstellen**: Verwenden Sie die Ansicht „Instanz hinzufügen“, um aus dem Microsoft Store zu installieren, RootFS-Images herunterzuladen oder vorhandene Distributionen zu klonen.
 - **Backup und Wiederherstellung**: Exportieren Sie Distributionen in `.tar` / `.tar.gz`-Archive und importieren Sie diese später oder auf einem anderen Rechner.
-- **Speicherort verschieben**: Verschieben Sie große VHDX-Dateien auf ein anderes Laufwerk, um Platz auf Laufwerk C: zu sparen.
+- **Distribution verschieben**: Distribution in das angegebene Verzeichnis verschieben für besseres Speichermanagement.
 - **Status überwachen**: Behalten Sie den Echtzeit-Status der Distributionen und die Speichernutzung im Auge, während das WSL Dashboard läuft.
 
 ## ⚙️ Konfiguration & Protokolle

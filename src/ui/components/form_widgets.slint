@@ -150,6 +150,7 @@ export component CustomCheckBox inherits Rectangle {
     callback toggled;
     // height: 20px; // Removed fixed height to allow wrapping
     background: transparent;
+    opacity: root.enabled ? 1.0 : 0.5;
     HorizontalLayout {
         spacing: 12px;
 

@@ -47,10 +47,11 @@ Di bawah ini adalah demonstrasi WSL Dashboard dalam beraksi:
 - GUI intuitif dengan dukungan mode gelap dan animasi yang mulus.
 - Manajemen satu klik untuk semua distribusi WSL Anda (Mulai, Berhenti, Hentikan Paksa, Batalkan Registrasi).
 - Akses cepat ke terminal distribusi, VS Code, dan File Explorer.
+- Pengaturan distribusi yang komprehensif: Tetapkan sebagai default, startup otomatis saat boot, dan jalur direktori khusus.
 - Pemantauan dan tampilan status instance WSL secara real-time.
 - Ekspor dan cadangkan ke arsip `.tar` atau `.tar.gz` yang dikompresi.
 - Impor dan kloning instance dari cadangan atau distribusi yang ada.
-- Relokasi instance WSL berukuran besar (migrasi VHDX) ke disk lain untuk menghemat ruang di drive C:.
+- Pindahkan distribusi ke direktori yang ditentukan (migrasi VHDX) untuk menghemat ruang drive C:.
 - Instalasi distribusi cerdas dari Microsoft Store atau GitHub.
 - Bantuan unduhan RootFS bawaan untuk instalasi manual.
 - Wawasan mendetail tentang lokasi file VHDX, ukuran disk virtual, dan penggunaan disk aktual.
@@ -108,11 +109,12 @@ Pastikan Anda telah memasang alat bantu Rust (Rust 1.92+ atau yang lebih baru).
 
 ## 🧭 Ringkasan Penggunaan
 
-- **Kelola distribusi yang ada**: mulai, berhenti, hentikan paksa, atau batalkan registrasi distribusi WSL apa pun dari tampilan utama.
+- **Kelola distribusi yang ada**: mulai, berhenti, hentikan paksa, batalkan registrasi, atau tetapkan sebagai distro default dari tampilan utama.
+- **Konfigurasikan distribusi**: atur perilaku startup otomatis dan sesuaikan direktori peluncuran Terminal/VS Code.
 - **Buka alat dengan cepat**: luncurkan distribusi di terminal, VS Code, atau File Explorer Anda dengan satu klik.
 - **Buat instance baru**: gunakan tampilan Tambah Instance untuk memasang dari Microsoft Store, mengunduh gambar RootFS, atau mengkloning distribusi yang ada.
 - **Cadangkan dan pulihkan**: ekspor distribusi ke arsip `.tar` / `.tar.gz` dan impor nanti atau di mesin lain.
-- **Pindahkan lokasi penyimpanan**: relokasi file VHDX besar ke drive lain untuk menghemat ruang drive C:.
+- **Pindahkan distribusi**: pindahkan distribusi ke direktori yang ditentukan untuk manajemen penyimpanan yang lebih baik.
 - **Pantau status**: awasi status distribusi real-time dan penggunaan penyimpanan saat WSL Dashboard berjalan.
 
 ## ⚙️ Konfigurasi & Log

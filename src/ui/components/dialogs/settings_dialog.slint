@@ -1,0 +1,261 @@
+import { Theme, Information, AppI18n } from "../../theme.slint";
+import { CustomLineEdit, CustomCheckBox } from "../form_widgets.slint";
+import { CustomScrollbar } from "../scrollbar.slint";
+
+export component SettingsDialog inherits Rectangle {
+    in property <string> distro_name;
+    in-out property <string> terminal_dir: "~";
+    in-out property <string> vscode_dir: "/home";
+    in property <bool> lock_default: false;
+    in-out property <bool> is_default: false;
+    in-out property <bool> autostart: false;
+    in-out property <string> startup_script: "";
+    in property <string> terminal_dir_error: "";
+    in property <string> vscode_dir_error: "";
+    in property <string> startup_script_error: "";
+    in property <string> default_error: "";
+    callback close;
+    callback save;
+    
+    // Background mask
+    background: #00000080;
+    
+    // Trap clicks
+    TouchArea { }
+
+    // Dialog Box
+    Rectangle {
+        width: 440px;
+        height: 360px;
+        background: Theme.card_bg;
+        border-radius: 8px;
+        border-width: 1px;
+        border-color: Theme.border_color;
+        TouchArea { /* prevent click through */ }
+
+        VerticalLayout {
+            padding: 24px;
+            spacing: 0px;
+            
+            // Header
+            HorizontalLayout {
+                padding-bottom: 16px;
+                alignment: space-between;
+                Text {
+                    text: AppI18n.t("dialog.settings_title", [root.distro_name, AppI18n.version]);
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: Theme.text_primary;
+                }
+
+                TouchArea {
+                    width: 24px;
+                    height: 24px;
+                    clicked => {
+                        root.close();
+                    }
+                    Rectangle {
+                        background: parent.has-hover ? Theme.hover_bg : transparent;
+                        border-radius: 4px;
+                        Text {
+                            text: "\u{E8BB}";
+                            font-family: "Segoe Fluent Icons";
+                            font-size: 14px;
+                            color: Theme.text_primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                background: Theme.border_color;
+            }
+
+            Rectangle {
+                height: 16px;
+            } // Spacer
+
+            // Content Container with Scrolling
+            Rectangle {
+                vertical-stretch: 1;
+                clip: true;
+                flick := Flickable {
+                    viewport-height: content-layout.preferred-height;
+                    width: 100%;
+                    height: 100%;
+                    content-layout := VerticalLayout {
+                        padding-right: 16px;
+                        spacing: 16px;
+                        alignment: start;
+
+                        // 1. Set Default Distribution
+                        VerticalLayout {
+                            spacing: 8px;
+                            CustomCheckBox {
+                                text: AppI18n.t("dialog.set_default", [AppI18n.version]);
+                                checked <=> root.is_default;
+                                enabled: !root.lock_default;
+                            }
+
+                            if (root.default_error != ""): Text {
+                                text: root.default_error;
+                                font-size: 11px;
+                                color: #ff3333;
+                            }
+                        }
+
+                        // 2. Autostart
+                        CustomCheckBox {
+                            text: AppI18n.t("dialog.autostart", [AppI18n.version]);
+                            checked <=> root.autostart;
+                        }
+
+                        // --- Optional Startup Script ---
+                        if root.autostart: VerticalLayout {
+                            spacing: 8px;
+                            Text {
+                                text: AppI18n.t("dialog.startup_script_title", [AppI18n.version]);
+                                font-size: 13px;
+                                color: Theme.text_secondary;
+                            }
+
+                            CustomLineEdit {
+                                text <=> root.startup_script;
+                                placeholder-text: AppI18n.t("dialog.startup_script_placeholder", [AppI18n.version]);
+                            }
+
+                            if (root.startup_script_error != ""): Text {
+                                text: root.startup_script_error;
+                                font-size: 11px;
+                                color: #ff3333;
+                            }
+                        }
+
+                        // 3. Terminal default directory
+                        VerticalLayout {
+                            spacing: 8px;
+                            Text {
+                                text: AppI18n.t("dialog.terminal_dir", [AppI18n.version]);
+                                font-size: 13px;
+                                color: Theme.text_secondary;
+                            }
+
+                            CustomLineEdit {
+                                text <=> root.terminal_dir;
+                                placeholder-text: "~";
+                            }
+
+                            if (root.terminal_dir_error != ""): Text {
+                                text: root.terminal_dir_error;
+                                font-size: 11px;
+                                color: #ff3333;
+                            }
+                        }
+
+                        // 4. VS Code working directory
+                        VerticalLayout {
+                            spacing: 8px;
+                            Text {
+                                text: AppI18n.t("dialog.vscode_dir", [AppI18n.version]);
+                                font-size: 13px;
+                                color: Theme.text_secondary;
+                            }
+
+                            CustomLineEdit {
+                                text <=> root.vscode_dir;
+                                placeholder-text: "/home";
+                            }
+
+                            if (root.vscode_dir_error != ""): Text {
+                                text: root.vscode_dir_error;
+                                font-size: 11px;
+                                color: #ff3333;
+                            }
+                        }
+
+                        Rectangle {
+                            height: 8px;
+                        } // Extra bottom padding for scrolling
+                    }
+                }
+
+                // Scrollbar
+                if (flick.viewport-height > flick.height): CustomScrollbar {
+                    x: parent.width - 8px;
+                    y: 0;
+                    width: 6px;
+                    height: 100%;
+                    maximum: flick.viewport-height - flick.height;
+                    page_size: flick.height;
+                    value: -flick.viewport-y;
+                    scroll_to(v) => {
+                        flick.viewport-y = -v;
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 16px;
+            } // Spacer
+
+            // Footer
+            HorizontalLayout {
+                alignment: end;
+                spacing: 12px;
+                
+                // Cancel Button
+                Rectangle {
+                    width: 90px;
+                    height: 32px;
+                    background: transparent;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: Theme.border_color;
+                    TouchArea {
+                        clicked => {
+                            root.close();
+                        }
+                        Rectangle {
+                            background: parent.has-hover ? Theme.hover_bg : transparent;
+                            border-radius: 6px;
+                        }
+                    }
+
+                    Text {
+                        text: AppI18n.t("dialog.cancel", [AppI18n.version]);
+                        color: Theme.text_primary;
+                        font-size: 13px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Save Button
+                Rectangle {
+                    width: 90px;
+                    height: 32px;
+                    background: Theme.accent;
+                    border-radius: 6px;
+                    TouchArea {
+                        clicked => {
+                            root.save();
+                        }
+                    }
+
+                    Text {
+                        text: AppI18n.t("dialog.save", [AppI18n.version]);
+                        color: white;
+                        font-size: 13px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

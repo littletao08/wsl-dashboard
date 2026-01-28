@@ -22,15 +22,20 @@ pub async fn open_distro_folder(_executor: &WslCommandExecutor, distro_name: &st
     }).await.unwrap()
 }
 
-pub async fn open_distro_vscode(executor: &WslCommandExecutor, distro_name: &str) -> WslCommandResult<String> {
-    executor.execute_command(&["-d", distro_name, "--", "code", "/"]).await
+pub async fn open_distro_vscode(executor: &WslCommandExecutor, distro_name: &str, working_dir: &str) -> WslCommandResult<String> {
+    executor.execute_command(&["-d", distro_name, "--", "code", working_dir]).await
 }
 
-pub async fn open_distro_terminal(_executor: &WslCommandExecutor, distro_name: &str) -> WslCommandResult<String> {
+pub async fn check_vscode_version(executor: &WslCommandExecutor, distro_name: &str) -> WslCommandResult<String> {
+    executor.execute_command(&["-d", distro_name, "--", "code", "--version"]).await
+}
+
+pub async fn open_distro_terminal(_executor: &WslCommandExecutor, distro_name: &str, working_dir: &str) -> WslCommandResult<String> {
     let name = distro_name.to_string();
+    let cd_path = working_dir.to_string();
     task::spawn_blocking(move || {
         let mut command = std::process::Command::new("cmd");
-        command.args(&["/c", "start", "wsl", "-d", &name, "--cd", "~"]);
+        command.args(&["/c", "start", "wsl", "-d", &name, "--cd", &cd_path]);
         
         #[cfg(windows)]
         {

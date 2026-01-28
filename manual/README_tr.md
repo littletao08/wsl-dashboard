@@ -47,10 +47,11 @@ Aşağıda WSL Dashboard'un çalışırken bir gösterimi yer almaktadır:
 - Koyu mod desteği ve akıcı animasyonlarla sezgisel GUI.
 - Tüm WSL dağıtımlarınız için tek tıkla yönetim (Başlat, Durdur, Sonlandır, Kaydını Sil).
 - Dağıtım terminallerine, VS Code'a ve Dosya Gezgini'ne hızlı erişim.
+- Kapsamlı dağıtım ayarları: Varsayılan olarak ayarla, önyüklemede otomatik başlatma ve özel dizin yolları.
 - Gerçek zamanlı WSL örneği durumu izleme ve görüntüleme.
 - `.tar` veya sıkıştırılmış `.tar.gz` arşivlerine dışa aktarma ve yedekleme.
 - Yedeklerden veya mevcut dağıtımlardan örnekleri içe aktarma ve kopyalama.
-- C: sürücüsünde yer kazanmak için büyük WSL örneklerini (VHDX taşıma) diğer disklere taşıma.
+- Dağıtımı belirtilen dizine taşıyın (VHDX taşıma) ve C: sürücüsünde yer kazanın.
 - Microsoft Store veya GitHub'dan akıllı dağıtım kurulumu.
 - Manuel kurulumlar için yerleşik RootFS indirme yardımcısı.
 - VHDX dosya konumu, sanal disk boyutu ve gerçek disk kullanımı hakkında detaylı bilgiler.
@@ -108,11 +109,12 @@ Rust araç zincirinin (Rust 1.92+ veya daha yeni) kurulu olduğundan emin olun.
 
 ## 🧭 Kullanım Özeti
 
-- **Mevcut dağıtımları yönetin**: Ana görünümden herhangi bir WSL dağıtımını başlatın, durdurun, sonlandırın veya kaydını silin.
+- **Mevcut dağıtımları yönetin**: Ana görünümden herhangi bir WSL dağıtımını başlatın, durdurun, sonlandırın, kaydını silin veya varsayılan dağıtım olarak ayarlayın.
+- **Dağıtımları yapılandırın**: otomatik başlatma davranışını ayarlayın ve Terminal/VS Code başlatma dizinlerini özelleştirin.
 - **Araçları hızlıca açın**: Bir dağıtımı terminalinizde, VS Code'da veya Dosya Gezgini'nde tek bir tıklamayla başlatın.
 - **Yeni örnekler oluşturun**: Microsoft Store'dan yüklemek, RootFS imajlarını indirmek veya mevcut dağıtımları kopyalamak için Örnek Ekle görünümünü kullanın.
 - **Yedekleme ve geri yükleme**: Dağıtımları `.tar` / `.tar.gz` arşivlerine dışa aktarın ve daha sonra veya başka bir makinede içe aktarın.
-- **Depolama konumunu taşıyın**: C: sürücüsünde yer kazanmak için büyük VHDX dosyalarını farklı bir sürücüye taşıyın.
+- **Dağıtımı taşı**: daha iyi depolama yönetimi için dağıtımı belirtilen dizine taşıyın.
 - **Durumu izleyin**: WSL Dashboard çalışırken gerçek zamanlı dağıtım durumunu ve depolama kullanımını takip edin.
 
 ## ⚙️ Yapılandırma ve Günlükler

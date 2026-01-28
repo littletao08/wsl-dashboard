@@ -37,6 +37,9 @@ export component AppWindow inherits Window {
     in-out property <string> selected_install_distro: "";
     in property <[string]> installable_distro_names: [];
     in property <bool> is_installing: false;
+    in property <bool> is_exporting: false;
+    in property <bool> is_cloning: false;
+    in property <bool> is_moving: false;
     in property <string> install_status: "";
     in property <bool> install_success: false;
     in property <string> terminal_output: "";
@@ -60,8 +63,18 @@ export component AppWindow inherits Window {
     in-out property <string> clone_target_name: "";
     in-out property <string> clone_target_path: "";
     in property <string> clone_error: "";
+    in-out property <bool> show_move_dialog: false;
+    in-out property <string> move_source_name: "";
+    in-out property <string> move_target_name: "";
+    in-out property <string> move_target_path: "";
+    in property <string> move_error: "";
+    in-out property <string> move_original_path: "";
     in-out property <bool> show_message_dialog: false;
     in-out property <string> current_message: "";
+    in-out property <string> current_message_link: "";
+    in-out property <string> current_message_url: "";
+    in-out property <string> current_message_action: "";
+    in-out property <string> copy_script_content: "";
     in-out property <bool> show_update_dialog: false;
     in-out property <bool> show_install_warn_dialog: false;
     in-out property <bool> show_expire_dialog: false;
@@ -78,6 +91,18 @@ export component AppWindow inherits Window {
     in property <Information> information;
     in property <[RootFSHelpItem]> rootfs_help_list: [{ name: "Ubuntu", url: "https://cdimages.ubuntu.com/ubuntu-wsl/" }];
     in-out property <bool> show_information: false;
+    in-out property <bool> show_settings: false;
+    in-out property <string> settings_distro_name: "";
+    in-out property <string> settings_terminal_dir: "~";
+    in-out property <string> settings_vscode_dir: "/home";
+    in-out property <bool> settings_is_default: false;
+    in-out property <bool> settings_lock_default: false;
+    in-out property <bool> settings_autostart: false;
+    in-out property <string> settings_startup_script: "";
+    in-out property <string> settings_terminal_dir_error: "";
+    in-out property <string> settings_vscode_dir_error: "";
+    in-out property <string> settings_startup_script_error: "";
+    in-out property <string> settings_default_error: "";
 
     // --- Callbacks ---
     callback select_tab(int);
@@ -96,6 +121,8 @@ export component AppWindow inherits Window {
     callback select_install_file(int);
     callback edit_bashrc_distro(string);
     callback information_clicked(string);
+    callback settings_clicked(string);
+    callback confirm_distro_settings(string, string, string, bool, bool, string);
     callback delete_clicked(string);
     callback clone_distro(string);
     callback open_url(string);
@@ -109,7 +136,12 @@ export component AppWindow inherits Window {
     callback open_clone_dialog(string);
     callback select_clone_folder();
     callback confirm_clone(string, string, string);
+    callback open_move_dialog(string);
+    callback select_move_folder();
+    callback confirm_move(string, string, string);
     callback close_message_dialog();
+    callback message_link_clicked();
+    callback message_action_clicked(string);
     callback check_update();
     callback download_update();
     callback close_expire_dialog();
@@ -195,11 +227,17 @@ export component AppWindow inherits Window {
                             open_clone_dialog(n) => {
                                 root.open_clone_dialog(n);
                             }
+                            open_move_dialog(n) => {
+                                root.open_move_dialog(n);
+                            }
                             edit_bashrc_distro(n) => {
                                 root.edit_bashrc_distro(n);
                             }
                             information_clicked(n) => {
                                 root.information_clicked(n);
+                            }
+                            settings_clicked(n) => {
+                                root.settings_clicked(n);
                             }
                             delete_clicked(n) => {
                                 root.delete_clicked(n);
@@ -317,11 +355,35 @@ export component AppWindow inherits Window {
             confirm_clone(n, p) => {
                 root.confirm_clone(root.clone_source_name, n, p);
             }
+            show_move: root.show_move_dialog;
+            move_source_name: root.move_source_name;
+            move_target_name <=> root.move_target_name;
+            move_target_path <=> root.move_target_path;
+            move_error: root.move_error;
+            cancel_move => {
+                root.show_move_dialog = false;
+            }
+            browse_move => {
+                root.select_move_folder();
+            }
+            confirm_move(p) => {
+                root.confirm_move(root.move_source_name, root.move_target_name, p);
+            }
             show_message: root.show_message_dialog;
             message_text: root.current_message;
+            message_link_text: root.current_message_link;
+            message_action_text: root.current_message_action;
             close_message => {
                 root.show_message_dialog = false;
                 root.close_message_dialog();
+                root.current_message_link = "";
+                root.current_message_action = "";
+            }
+            message_link_clicked => {
+                root.message_link_clicked();
+            }
+            message_action_clicked => {
+                root.message_action_clicked(root.copy_script_content);
             }
             show_update: root.show_update_dialog;
             download_update => {
@@ -352,6 +414,24 @@ export component AppWindow inherits Window {
             information: root.information;
             close_information => {
                 root.show_information = false;
+            }
+            show_settings: root.show_settings;
+            settings_target_name: root.settings_distro_name;
+            settings_terminal_dir <=> root.settings_terminal_dir;
+            settings_vscode_dir <=> root.settings_vscode_dir;
+            settings_is_default <=> root.settings_is_default;
+            settings_lock_default <=> root.settings_lock_default;
+            settings_autostart <=> root.settings_autostart;
+            settings_startup_script <=> root.settings_startup_script;
+            settings_terminal_dir_error: root.settings_terminal_dir_error;
+            settings_vscode_dir_error: root.settings_vscode_dir_error;
+            settings_startup_script_error: root.settings_startup_script_error;
+            settings_default_error: root.settings_default_error;
+            confirm_settings(n, td, vd, id, as, ss) => {
+                root.confirm_distro_settings(n, td, vd, id, as, ss);
+            }
+            close_settings => {
+                root.show_settings = false;
             }
             rootfs_help_list: root.rootfs_help_list;
             show_rootfs_help: root.show_rootfs_help;

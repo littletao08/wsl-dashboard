@@ -322,9 +322,9 @@ impl WslDashboard {
     // # Return value
     // - Success: Returns `WslCommandResult` containing success message
     // - Failure: Returns `WslCommandResult` containing error information
-    pub async fn delete_distro(&self, name: &str) -> WslCommandResult<String> {
+    pub async fn delete_distro(&self, config_manager: &crate::config::ConfigManager, name: &str) -> WslCommandResult<String> {
         tracing::warn!("Initiating deletion of WSL distro '{}' (irreversible operation)", name);
-        let result = self.executor.delete_distro(name).await;
+        let result = self.executor.delete_distro(config_manager, name).await;
         
         if result.success {
             tracing::info!("Successfully deleted WSL distro '{}'", name);

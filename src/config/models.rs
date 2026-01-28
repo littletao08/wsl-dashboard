@@ -110,3 +110,59 @@ impl Config {
         }
     }
 }
+
+// --- Instance-specific configuration (instances.toml) ---
+
+pub const INSTANCES_VERSION: u32 = 1;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceCommonConfig {
+    #[serde(rename = "setting-version")]
+    pub setting_version: u32,
+    #[serde(rename = "modify-time")]
+    pub modify_time: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistroInstanceConfig {
+    #[serde(rename = "terminal-dir", default = "default_terminal_dir")]
+    pub terminal_dir: String,
+    #[serde(rename = "vscode-dir", default = "default_vscode_dir")]
+    pub vscode_dir: String,
+    #[serde(rename = "auto-startup", default)]
+    pub auto_startup: bool,
+    #[serde(rename = "startup-script", default)]
+    pub startup_script: String,
+}
+
+pub fn default_terminal_dir() -> String { "~".to_string() }
+pub fn default_vscode_dir() -> String { "/home".to_string() }
+
+impl Default for DistroInstanceConfig {
+    fn default() -> Self {
+        Self {
+            terminal_dir: default_terminal_dir(),
+            vscode_dir: default_vscode_dir(),
+            auto_startup: false,
+            startup_script: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstancesContainer {
+    pub common: InstanceCommonConfig,
+    pub instances: std::collections::HashMap<String, DistroInstanceConfig>,
+}
+
+impl InstancesContainer {
+    pub fn new() -> Self {
+        Self {
+            common: InstanceCommonConfig {
+                setting_version: INSTANCES_VERSION,
+                modify_time: chrono::Utc::now().timestamp_millis().to_string(),
+            },
+            instances: std::collections::HashMap::new(),
+        }
+    }
+}

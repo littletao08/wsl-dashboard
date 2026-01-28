@@ -22,7 +22,7 @@ pub fn map_name_to_icon_key(name: &str) -> Option<&'static str> {
     else if lower_name.contains("centos") { Some("centos") }
     else if lower_name.contains("alma") { Some("almalinux") }
     else if lower_name.contains("rocky") { Some("rockylinux") }
-    else if lower_name.contains("oracle") { Some("oracle") }
+    else if lower_name.contains("oracle") || lower_name == "ol" { Some("oracle") }
     else if lower_name.contains("gentoo") { Some("gentoo") }
     else if lower_name.contains("freebsd") { Some("freebsd") }
     else if lower_name.contains("zorin") { Some("zorin") }
@@ -116,13 +116,14 @@ pub fn load_icon(key: &str) -> Option<Image> {
         "garuda" => Some(load_png(include_bytes!("../../assets/icons/garuda.png"))),
         "gentoo" => Some(load_png(include_bytes!("../../assets/icons/gentoo.png"))),
         "kali" => Some(load_png(include_bytes!("../../assets/icons/kali.png"))),
-        "kdeneon" => Some(load_svg(include_bytes!("../../assets/icons/kdeneon.svg"))),
+        "kdeneon" => Some(load_png(include_bytes!("../../assets/icons/kdeneon.png"))),
         "manjaro" => Some(load_png(include_bytes!("../../assets/icons/manjaro.png"))),
         "mint" => Some(load_png(include_bytes!("../../assets/icons/mint.png"))),
         "mxlinux" => Some(load_png(include_bytes!("../../assets/icons/mxlinux.png"))),
         "nixos" => Some(load_png(include_bytes!("../../assets/icons/nixos.png"))),
         "nobara" => Some(load_png(include_bytes!("../../assets/icons/nobara.png"))),
         "opensuse" => Some(load_png(include_bytes!("../../assets/icons/opensuse.png"))),
+        "oracle" => Some(load_png(include_bytes!("../../assets/icons/oracle.png"))),
         "pop_os" => Some(load_png(include_bytes!("../../assets/icons/pop_os.png"))),
         "puppy" => Some(load_png(include_bytes!("../../assets/icons/puppy.png"))),
         "rockylinux" => Some(load_svg(include_bytes!("../../assets/icons/rockylinux.svg"))),

@@ -88,9 +88,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let ah = ah.clone();
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
-            let app_state = as_ptr.lock().await;
-            app_state.wsl_dashboard.delete_distro(&name).await;
-            drop(app_state);
+            {
+                let app_state = as_ptr.lock().await;
+                // Perform actual WSL deletion (includes config and autostart cleanup)
+                app_state.wsl_dashboard.delete_distro(&app_state.config_manager, &name).await;
+            }
             refresh_distros_ui(ah, as_ptr).await;
         });
     });

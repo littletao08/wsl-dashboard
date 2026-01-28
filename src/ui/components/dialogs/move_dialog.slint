@@ -1,0 +1,95 @@
+import { Button, LineEdit } from "std-widgets.slint";
+import { Theme, AppI18n } from "../../theme.slint";
+
+export component MoveDialog inherits Rectangle {
+    in property <string> distro_name;
+    in-out property <string> move_path;
+    in property <string> error_msg;
+    callback confirm(string);
+    callback cancel();
+    callback browse();
+    in property <bool> enabled: true;
+    background: #00000080;
+    TouchArea { }
+
+    Rectangle {
+        width: 450px;
+        height: 220px;
+        background: Theme.card_bg;
+        border-radius: 8px;
+        border-width: 1px;
+        border-color: Theme.border_color;
+        drop-shadow-blur: 16px;
+        drop-shadow-color: #00000040;
+        VerticalLayout {
+            padding: 24px;
+            spacing: 16px;
+            Text {
+                text: AppI18n.t("dialog.move_title", [AppI18n.version]) + ": " + distro_name;
+                font-size: 18px;
+                font-weight: 600;
+                color: Theme.text_primary;
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+                Text {
+                    text: AppI18n.t("dialog.target_path", [AppI18n.version]) + ":";
+                    font-size: 13px;
+                    color: Theme.text_secondary;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    LineEdit {
+                        text <=> move_path;
+                        read-only: true;
+                        height: 32px;
+                        horizontal-stretch: 1;
+                    }
+
+                    Button {
+                        text: AppI18n.t("settings.select_folder", [AppI18n.version]);
+                        height: 32px;
+                        enabled: root.enabled;
+                        clicked => {
+                            root.browse();
+                        }
+                    }
+                }
+            }
+
+            if (error_msg != ""): Text {
+                text: error_msg;
+                color: #ff3333;
+                font-size: 12px;
+                wrap: word-wrap;
+            }
+            Rectangle {
+                vertical-stretch: 1;
+            } // Spacer
+
+            HorizontalLayout {
+                alignment: end;
+                spacing: 12px;
+                Button {
+                    text: AppI18n.t("dialog.cancel", [AppI18n.version]);
+                    height: 32px;
+                    clicked => {
+                        root.cancel();
+                    }
+                }
+
+                Button {
+                    text: AppI18n.t("dialog.move_confirm", [AppI18n.version]);
+                    height: 32px;
+                    primary: true;
+                    enabled: root.enabled;
+                    clicked => {
+                        root.confirm(move_path);
+                    }
+                }
+            }
+        }
+    }
+}

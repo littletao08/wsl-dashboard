@@ -1,10 +1,46 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::info;
+use tracing::{info, error, warn};
 use crate::{AppWindow, AppState, i18n};
+use slint::Model;
 use crate::ui::data::refresh_distros_ui;
 
 pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    // Handle message link click (to open startup folder or generic URL)
+    let ah_link = app_handle.clone();
+    app.on_message_link_clicked(move || {
+        if let Some(app) = ah_link.upgrade() {
+            let mut link = app.get_current_message_url().to_string();
+            if link.is_empty() {
+                link = app.get_current_message_link().to_string();
+            }
+            
+            if link.starts_with("http://") || link.starts_with("https://") {
+                let _ = open::that(link);
+            } else if let Ok(startup_dir) = crate::app::autostart::get_startup_dir() {
+                // Legacy logic or fallback to startup dir if no specific link
+                let target = if !link.is_empty() && std::path::Path::new(&link).exists() {
+                    std::path::PathBuf::from(link)
+                } else {
+                    startup_dir
+                };
+                
+                let mut cmd = std::process::Command::new("explorer.exe");
+                cmd.arg(target);
+                
+                #[cfg(windows)]
+                {
+                    use std::os::windows::process::CommandExt;
+                    const CREATE_NO_WINDOW: u32 = 0x08000000;
+                    cmd.creation_flags(CREATE_NO_WINDOW);
+                }
+                
+                let _ = cmd.spawn();
+            }
+        }
+    });
+
+
     // Terminal
     let ah = app_handle.clone();
     let as_ptr = app_state.clone();
@@ -16,8 +52,9 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             {
                 let app_state = as_ptr.lock().await;
                 let executor = app_state.wsl_dashboard.executor().clone();
+                let working_dir = app_state.config_manager.get_instance_config(&name).terminal_dir;
                 drop(app_state);
-                let _ = executor.open_distro_terminal(&name).await;
+                let _ = executor.open_distro_terminal(&name, &working_dir).await;
             }
             // Refresh status immediately after opening terminal
             refresh_distros_ui(ah, as_ptr).await;
@@ -46,30 +83,71 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
     let ah = app_handle.clone();
     let as_ptr = app_state.clone();
     app.on_vscode_distro(move |name| {
-        info!("Operation: Open VS Code - {}", name);
+        info!("Operation: Try open VS Code - {}", name);
         let ah = ah.clone();
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
             let ah_timer = ah.clone();
-            if let Some(app) = ah.upgrade() {
-                app.set_show_vscode_startup(true);
-            }
+            
+            // 1. Pre-check: Calling wsl exec execute code --version
+            let executor = {
+                let state = as_ptr.lock().await;
+                state.wsl_dashboard.executor().clone()
+            };
+            
+            let check_result = crate::wsl::ops::ui::check_vscode_version(&executor, &name).await;
+            
+            // 2. Logic based on pre-check result
+            // A valid version output must succeed and start with a digit (e.g., "1.108.2")
+            let is_valid_version = check_result.success && {
+                let stdout = check_result.output.trim();
+                !stdout.is_empty() && stdout.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false)
+            };
 
-            {
-                let app_state = as_ptr.lock().await;
-                let executor = app_state.wsl_dashboard.executor().clone();
-                drop(app_state);
-                let _ = executor.open_distro_vscode(&name).await;
-            }
-            refresh_distros_ui(ah, as_ptr).await;
-
-            slint::Timer::single_shot(std::time::Duration::from_secs(6), move || {
-                if let Some(app) = ah_timer.upgrade() {
-                    if app.get_show_vscode_startup() {
-                        app.set_show_vscode_startup(false);
-                    }
+            if is_valid_version {
+                // Success: proceed with existing logic
+                if let Some(app) = ah.upgrade() {
+                    app.set_show_vscode_startup(true);
                 }
-            });
+
+                let working_dir = {
+                    let state = as_ptr.lock().await;
+                    state.config_manager.get_instance_config(&name).vscode_dir
+                };
+                
+                let _ = executor.open_distro_vscode(&name, &working_dir).await;
+                refresh_distros_ui(ah, as_ptr).await;
+
+                slint::Timer::single_shot(std::time::Duration::from_secs(6), move || {
+                    if let Some(app) = ah_timer.upgrade() {
+                        if app.get_show_vscode_startup() {
+                            app.set_show_vscode_startup(false);
+                        }
+                    }
+                });
+            } else {
+                // Failure: show prompt to install extension
+                // Fetch VS Code extension info from AppState or try to fetch if missing
+                let ext_info = {
+                    let state = as_ptr.lock().await;
+                    state.vscode_extension.clone()
+                };
+
+                let (ext_name, ext_url) = if let Some(info) = ext_info {
+                    (info.name, info.url)
+                } else {
+                    // Fallback to default values
+                    ("WSL".to_string(), "https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl".to_string())
+                };
+
+                if let Some(app) = ah.upgrade() {
+                    // Use the extension name as the link text, and the URL for the background
+                    app.set_current_message(i18n::t("dialog.vscode_extension_required").into());
+                    app.set_current_message_link(ext_name.into());
+                    app.set_current_message_url(ext_url.into());
+                    app.set_show_message_dialog(true);
+                }
+            }
         });
     });
 
@@ -128,6 +206,245 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                     app.set_show_message_dialog(true);
                 }
             }
+        });
+    });
+
+    // Instance settings
+    let ah = app_handle.clone();
+    let as_ptr = app_state.clone();
+    app.on_settings_clicked(move |name| {
+        info!("Operation: Show settings - {}", name);
+        let ah = ah.clone();
+        let as_ptr = as_ptr.clone();
+        let name = name.to_string();
+        let _ = slint::spawn_local(async move {
+            if let Some(app) = ah.upgrade() {
+                let mut is_default = false;
+                {
+                    let distros = app.get_distros();
+                    for i in 0..distros.row_count() {
+                        if let Some(d) = distros.row_data(i) {
+                            if d.name == name {
+                                is_default = d.is_default;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Load from instances.toml
+                let instance_config = {
+                    let state = as_ptr.lock().await;
+                    state.config_manager.get_instance_config(&name)
+                };
+                
+                app.set_settings_distro_name(name.clone().into());
+                app.set_settings_is_default(is_default);
+                app.set_settings_lock_default(is_default);
+                app.set_settings_terminal_dir(instance_config.terminal_dir.into());
+                app.set_settings_vscode_dir(instance_config.vscode_dir.into());
+                app.set_settings_startup_script(instance_config.startup_script.into());
+                let is_vbs_enabled = crate::app::autostart::is_autostart_enabled(&name);
+                app.set_settings_autostart(instance_config.auto_startup && is_vbs_enabled);
+                app.set_settings_terminal_dir_error("".into());
+                app.set_settings_vscode_dir_error("".into());
+                app.set_settings_startup_script_error("".into());
+                app.set_settings_default_error("".into());
+                app.set_show_settings(true);
+            }
+        });
+    });
+
+    // Handle settings confirmation
+    let ah = app_handle.clone();
+    let as_ptr = app_state.clone();
+    app.on_confirm_distro_settings(move |name, terminal_dir, vscode_dir, is_default, autostart, startup_script| {
+        info!("Operation: Save settings - {}", name);
+        let ah = ah.clone();
+        let as_ptr = as_ptr.clone();
+        let name = name.to_string();
+        let terminal_dir = terminal_dir.to_string();
+        let vscode_dir = vscode_dir.to_string();
+        let startup_script = startup_script.to_string();
+
+        let _ = slint::spawn_local(async move {
+            let executor = {
+                let state = as_ptr.lock().await;
+                state.wsl_dashboard.executor().clone()
+            };
+
+            
+            // Check if it was already default
+            let was_default = {
+                let distros = executor.list_distros().await;
+                distros.data.map(|list| list.iter().any(|d| d.name == name && d.is_default)).unwrap_or(false)
+            };
+
+            if let Some(app) = ah.upgrade() {
+                let mut has_error = false;
+                
+                // 1. Validate paths and default status
+                let terminal_exists = executor.check_path_exists(&name, &terminal_dir).await;
+                let vscode_exists = executor.check_path_exists(&name, &vscode_dir).await;
+                
+                // a. Terminal & VS Code paths
+                if !terminal_exists {
+                    app.set_settings_terminal_dir_error(crate::i18n::t("dialog.path_not_found").into());
+                    has_error = true;
+                } else {
+                    app.set_settings_terminal_dir_error("".into());
+                }
+
+                if !vscode_exists {
+                    app.set_settings_vscode_dir_error(crate::i18n::t("dialog.path_not_found").into());
+                    has_error = true;
+                } else {
+                    app.set_settings_vscode_dir_error("".into());
+                }
+
+                // b. Startup Script Validation (If enabled)
+                if autostart && !startup_script.trim().is_empty() {
+                    let (exists, executable) = executor.check_file_executable(&name, &startup_script).await;
+                    if !exists {
+                        app.set_settings_startup_script_error(crate::i18n::t("dialog.script_not_found").into());
+                        has_error = true;
+                    } else if !executable {
+                        app.set_settings_startup_script_error(crate::i18n::t("dialog.script_not_executable").into());
+                        has_error = true;
+                    } else {
+                        app.set_settings_startup_script_error("".into());
+                    }
+                } else {
+                    app.set_settings_startup_script_error("".into());
+                }
+
+                // c. Default distro error - UI handles this by hiding the option if already default
+                app.set_settings_default_error("".into());
+
+                if has_error {
+                    return;
+                }
+
+                // If no error, close dialog and continue saving
+                app.set_show_settings(false);
+            }
+
+            // 2. Save to instances.toml
+            let config = crate::config::DistroInstanceConfig {
+                terminal_dir,
+                vscode_dir,
+                auto_startup: autostart,
+                startup_script: startup_script.clone(),
+            };
+
+            {
+                let state = as_ptr.lock().await;
+                if let Err(e) = state.config_manager.update_instance_config(&name, config) {
+                    error!("Failed to save instance settings for '{}': {}", name, e);
+                }
+            }
+
+            // 3. Handle Default Distro (CLI)
+            if is_default && !was_default {
+                let _ = executor.execute_command(&["--set-default", &name]).await;
+            }
+
+            // 4. Handle Autostart
+            if autostart {
+                // a. Setup init script in Linux
+                let mut script_content = String::from("#! /bin/sh\\n\\n");
+                
+                if !startup_script.trim().is_empty() {
+                    // Execute user script in background, ignore all errors
+                    script_content.push_str("# Execute user script in background\\n");
+                    script_content.push_str(&format!("( {} ) > /dev/null 2>&1 &\\n\\n", startup_script.trim()));
+                }
+
+                script_content.push_str("# WSL Dashboard Keep-alive\\n");
+                script_content.push_str("exec sleep infinity\\n");
+
+                let setup_cmd = format!("printf '{}' > /etc/init.wsl-dashboard && chmod +x /etc/init.wsl-dashboard", script_content);
+                let _ = executor.execute_command(&["-d", &name, "-u", "root", "-e", "sh", "-c", &setup_cmd]).await;
+            }
+            
+            
+            // b. Update Windows startup VBS (handles both true and false)
+            let write_result = crate::app::autostart::update_windows_autostart(&name, autostart).await;
+            
+            // If write fails or times out, try backing up to the desktop
+            if let Err(e) = &write_result {
+                error!("Failed to update Windows autostart for '{}': {}", name, e);
+                
+                // If enabling autostart failed, back up to the desktop
+                if autostart {
+                    if let Some(desktop_dir) = dirs::desktop_dir() {
+                        let backup_path = desktop_dir.join("wsl-dashboard.vbs");
+                        
+                        // Build VBS content and write to the desktop
+                        let vbs_content = format!(
+                            "Set ws = WScript.CreateObject(\"WScript.Shell\")\r\nws.run \"wsl -d {} -u root /etc/init.wsl-dashboard start\", vbhide",
+                            name
+                        );
+                        
+                        if let Ok(_) = std::fs::write(&backup_path, vbs_content) {
+                            info!("VBS file backed up to desktop: {}", backup_path.display());
+                        }
+                    }
+                }
+            }
+
+            // c. Unified verification logic: Regardless of whether write succeeded, check if the file actually exists in the startup directory
+            if autostart {
+                let ah_verify = ah.clone();
+                let name_clone = name.clone();
+                let _ = slint::spawn_local(async move {
+                    // Wait for 5 seconds to give anti-virus software and the system some time
+                    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                    
+                    if let Ok(vbs_path) = crate::app::autostart::get_vbs_path() {
+                        if !vbs_path.exists() {
+                            warn!("Verification failed: VBS file does not exist in the startup directory, possibly intercepted or deleted by anti-virus software");
+                            
+                            // Ensure there is a backup file on the desktop
+                            if let Some(desktop_dir) = dirs::desktop_dir() {
+                                let backup_path = desktop_dir.join("wsl-dashboard.vbs");
+                                
+                                // If not on the desktop either, create one
+                                if !backup_path.exists() {
+                                    let vbs_content = format!(
+                                        "Set ws = WScript.CreateObject(\"WScript.Shell\")\r\nws.run \"wsl -d {} -u root /etc/init.wsl-dashboard start\", vbhide",
+                                        name_clone
+                                    );
+                                    
+                                    let _ = std::fs::write(&backup_path, vbs_content);
+                                    info!("VBS file backed up to desktop: {}", backup_path.display());
+                                }
+                            }
+                            
+                            // Show a unified prompt dialog
+                            if let Some(app) = ah_verify.upgrade() {
+                                app.set_current_message(crate::i18n::t("dialog.autostart_timeout").into());
+                                
+                                // Add a clickable link to open the startup directory
+                                if let Ok(startup_dir) = crate::app::autostart::get_startup_dir() {
+                                    app.set_current_message_link(
+                                        crate::i18n::tr("dialog.click_to_open_startup", &[startup_dir.to_string_lossy().to_string()]).into()
+                                    );
+                                }
+                                
+                                app.set_current_message_action("".into());
+                                app.set_copy_script_content("".into());
+                                app.set_show_message_dialog(true);
+                            }
+                        } else {
+                            info!("✅ VBS file successfully created and exists in the startup directory");
+                        }
+                    }
+                });
+            }
+
+            // 5. Refresh UI
+            refresh_distros_ui(ah, as_ptr).await;
         });
     });
 }

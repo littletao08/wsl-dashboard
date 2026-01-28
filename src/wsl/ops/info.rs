@@ -68,6 +68,7 @@ pub async fn get_distro_information(executor: &WslCommandExecutor, distro_name: 
             install_location = "Unknown"
             vhdx_path = "Unknown"
             vhdx_size = "0 GB"
+            package_family_name = ""
         }}
 
         foreach ($subkey in $subkeys) {{
@@ -75,6 +76,7 @@ pub async fn get_distro_information(executor: &WslCommandExecutor, distro_name: 
             if ($props.DistributionName -eq $distro) {{
                 $res.install_location = $props.BasePath
                 $res.wsl_version = if ($props.Version -eq 2) {{ "WSL2" }} else {{ "WSL1" }}
+                $res.package_family_name = if ($props.PackageFamilyName) {{ $props.PackageFamilyName }} else {{ "" }}
                 
                 $vhdxPaths = @(
                     (Join-Path $props.BasePath "ext4.vhdx"),
@@ -113,13 +115,16 @@ pub async fn get_distro_information(executor: &WslCommandExecutor, distro_name: 
             information.install_location = parsed["install_location"].as_str().unwrap_or("Unknown").to_string();
             information.vhdx_path = parsed["vhdx_path"].as_str().unwrap_or("Unknown").to_string();
             information.vhdx_size = parsed["vhdx_size"].as_str().unwrap_or("0 GB").to_string();
+            information.package_family_name = parsed["package_family_name"].as_str().unwrap_or("").to_string();
         }
     }
 
-    // Get running status and actual usage
+    // Get running status
     let distros_result = list_distros(executor).await;
+    let mut is_running = false;
     if let Some(distros) = distros_result.data {
         if let Some(d) = distros.iter().find(|d| d.name == distro_name_owned) {
+            is_running = d.status == WslStatus::Running;
             information.status = match d.status {
                 WslStatus::Running => "Running",
                 WslStatus::Stopped => "Stopped",
@@ -127,31 +132,68 @@ pub async fn get_distro_information(executor: &WslCommandExecutor, distro_name: 
         }
     }
 
-    // Get df -B1M / statistics
-    let df_result = executor.execute_command(&["-d", &distro_name_owned, "--exec", "df", "-B1M", "/"]).await;
-    if df_result.success {
-        let output = df_result.output.trim();
-        if let Some(second_line) = output.lines().nth(1) {
-            let parts: Vec<&str> = second_line.split_whitespace().collect();
-            if parts.len() >= 3 {
-                if let Ok(mb_val) = parts[2].parse::<f64>() {
-                    let gb_val = mb_val / 1024.0;
-                    information.actual_used = format!("{:.2} GB", gb_val);
+    // Get df -B1M / statistics only if running
+    if is_running {
+        let df_result = executor.execute_command(&["-d", &distro_name_owned, "--exec", "df", "-B1M", "/"]).await;
+        if df_result.success {
+            let output = df_result.output.trim();
+            if let Some(second_line) = output.lines().nth(1) {
+                let parts: Vec<&str> = second_line.split_whitespace().collect();
+                if parts.len() >= 3 {
+                    if let Ok(mb_val) = parts[2].parse::<f64>() {
+                        let gb_val = mb_val / 1024.0;
+                        information.actual_used = format!("{:.2} GB", gb_val);
+                    } else {
+                        information.actual_used = format!("{} MB", parts[2]); 
+                    }
                 } else {
-                    information.actual_used = format!("{} MB", parts[2]); 
+                    information.actual_used = "Parse Error".to_string();
                 }
             } else {
-                 information.actual_used = "Parse Error".to_string();
+                information.actual_used = "No Output".to_string();
             }
         } else {
-             information.actual_used = "No Output".to_string();
+            information.actual_used = "Error".to_string();
         }
     } else {
         information.actual_used = "Unknown (Stopped)".to_string();
-        if information.status == "Running" {
-             information.actual_used = "Error".to_string();
-        }
     }
 
     WslCommandResult::success(String::new(), Some(information))
+}
+
+#[allow(dead_code)]
+pub async fn get_distro_install_location(_executor: &WslCommandExecutor, distro_name: &str) -> WslCommandResult<String> {
+    let distro_name_owned = distro_name.to_string();
+    
+    // Minimal PowerShell script to only get the BasePath (install location)
+    let ps_script = format!(r#"
+        $distro = "{}"
+        $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss"
+        $subkeys = Get-ChildItem $regPath -ErrorAction SilentlyContinue
+        foreach ($subkey in $subkeys) {{
+            $props = Get-ItemProperty $subkey.PSPath -ErrorAction SilentlyContinue
+            if ($props.DistributionName -eq $distro) {{
+                $props.BasePath
+                break
+            }}
+        }}
+    "#, distro_name_owned);
+
+    let mut cmd = tokio::process::Command::new("powershell");
+    cmd.args(&["-NoProfile", "-NonInteractive", "-Command", &ps_script]);
+    #[cfg(windows)]
+    {
+        // use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    if let Ok(output) = cmd.output().await {
+        let location = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !location.is_empty() {
+            return WslCommandResult::success(String::new(), Some(location));
+        }
+    }
+
+    WslCommandResult::error("".into(), "Failed to get install location".into())
 }

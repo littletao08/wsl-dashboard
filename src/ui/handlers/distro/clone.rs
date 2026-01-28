@@ -14,6 +14,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
     app.on_open_clone_dialog(move |name| {
         info!("Operation: Open clone dialog - {}", name);
         if let Some(app) = ah.upgrade() {
+            if app.get_is_cloning() || app.get_is_exporting() || app.get_is_moving() {
+                app.set_current_message(i18n::t("dialog.operation_in_progress").into());
+                app.set_show_message_dialog(true);
+                return;
+            }
             // Generate 4-character random alphanumeric string
             let random_suffix: String = rand::rng()
                 .sample_iter(&Alphanumeric)
@@ -58,6 +63,10 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             Some(a) => a,
             None => return,
         };
+
+        if ah.get_is_cloning() || ah.get_is_exporting() || ah.get_is_moving() {
+            return;
+        }
 
         // 1. Validation: Name length <= 24
         if target_name.len() > 24 {
@@ -117,6 +126,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let _ = slint::spawn_local(async move {
             // Show cloning indicator
             if let Some(app) = ah_clone.upgrade() {
+                app.set_is_cloning(true);
                 app.set_operation_text(i18n::t("operation.cloning").into());
                 app.set_show_operation(true);
             }
@@ -139,6 +149,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             if !export_result.success {
                 if let Some(app) = ah_clone.upgrade() {
                     app.set_show_operation(false);
+                    app.set_is_cloning(false);
                     let err = export_result.error.unwrap_or_else(|| i18n::t("dialog.export_failed").replace("{0}", ""));
                     app.set_current_message(i18n::tr("dialog.clone_failed_export", &[err]).into());
                     app.set_show_message_dialog(true);
@@ -157,6 +168,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
 
             if let Some(app) = ah_clone.upgrade() {
                 app.set_show_operation(false);
+                app.set_is_cloning(false);
                 if import_result.success {
                     app.set_current_message(i18n::tr("dialog.clone_success", &[source_name.clone(), target_name.clone()]).into());
                     refresh_distros_ui(ah_clone.clone(), as_ptr.clone()).await;

@@ -3,49 +3,90 @@ import { Theme, AppI18n } from "../../theme.slint";
 
 export component MessageDialog inherits Rectangle {
     in property <string> message;
+    in property <string> link_text: "";
+    in property <string> action_text: "";
     callback close;
-    background: #00000080;
-    TouchArea { }
+    callback link_clicked;
+    callback action_clicked;
+    width: 440px;
+    height: layout.preferred-height;
+    background: Theme.card_bg;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: Theme.border_color;
+    drop-shadow-blur: 16px;
+    drop-shadow-color: #00000040;
+    layout := VerticalLayout {
+        padding: 24px;
+        spacing: 12px;
+        alignment: start;
+        Text {
+            text: AppI18n.t("dialog.info", [AppI18n.version]);
+            font-size: 16px;
+            font-weight: 600;
+            color: Theme.text_primary;
+        }
 
-    Rectangle {
-        width: 350px;
-        height: 180px;
-        background: Theme.card_bg;
-        border-radius: 8px;
-        border-width: 1px;
-        border-color: Theme.border_color;
-        drop-shadow-blur: 16px;
-        drop-shadow-color: #00000040;
         VerticalLayout {
-            padding: 24px;
-            spacing: 16px;
-            alignment: space-between;
-            Text {
-                text: AppI18n.t("dialog.info", [AppI18n.version]);
-                font-size: 16px;
-                font-weight: 600;
-                color: Theme.text_primary;
-            }
-
+            spacing: 8px;
             Text {
                 text: message;
                 font-size: 14px;
                 color: Theme.text_primary;
                 wrap: word-wrap;
-                horizontal-alignment: center;
-                vertical-alignment: center;
-                height: 48px;
+                horizontal-alignment: left;
             }
 
-            HorizontalLayout {
+            if root.link_text != "": HorizontalLayout {
                 alignment: center;
-                Button {
-                    text: AppI18n.t("dialog.confirm", [AppI18n.version]);
-                    height: 32px;
-                    width: 100px;
+                TouchArea {
+                    width: link_text_item.preferred-width;
+                    height: 24px;
+                    mouse-cursor: pointer;
                     clicked => {
-                        root.close();
+                        root.link_clicked();
                     }
+                    link_text_item := Text {
+                        text: root.link_text;
+                        font-size: 14px;
+                        color: parent.has-hover ? Theme.accent.brighter(20%) : Theme.accent;
+                        font-italic: true;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+            if root.action_text != "": HorizontalLayout {
+                alignment: center;
+                TouchArea {
+                    width: action_text_item.preferred-width;
+                    height: 24px;
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.action_clicked();
+                    }
+                    action_text_item := Text {
+                        text: root.action_text;
+                        font-size: 14px;
+                        color: parent.has-hover ? Theme.accent.brighter(20%) : Theme.accent;
+                        font-italic: true;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: AppI18n.t("dialog.confirm", [AppI18n.version]);
+                height: 32px;
+                width: 100px;
+                clicked => {
+                    root.close();
                 }
             }
         }

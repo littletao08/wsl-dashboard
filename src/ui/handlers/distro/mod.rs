@@ -8,6 +8,7 @@ pub mod manage;
 pub mod export;
 pub mod clone;
 pub mod install;
+pub mod move_distro;
 
 pub fn sanitize_instance_name(name: &str) -> String {
     let mut sanitized: String = name.chars()
@@ -35,4 +36,5 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
     export::setup(app, app_handle.clone(), app_state.clone());
     clone::setup(app, app_handle.clone(), app_state.clone());
     install::setup(app, app_handle.clone(), app_state.clone());
+    move_distro::setup(app, app_handle.clone(), app_state.clone());
 }

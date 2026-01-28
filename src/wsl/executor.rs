@@ -299,7 +299,9 @@ impl WslCommandExecutor {
         let mut stdout_done = false;
         let mut stderr_done = false;
  
-        while !stdout_done || !stderr_done {
+        let mut exit_status = None;
+
+        while (!stdout_done || !stderr_done) && exit_status.is_none() {
             tokio::select! {
                 result = stdout.read(&mut out_buf), if !stdout_done => {
                     match result {
@@ -338,10 +340,16 @@ impl WslCommandExecutor {
                         }
                     }
                 }
+                status = child.wait() => {
+                    exit_status = Some(status);
+                }
             }
         }
- 
-        let status = child.wait().await.map_err(|e| e.to_string());
+
+        let status = match exit_status {
+            Some(s) => s.map_err(|e| e.to_string()),
+            None => child.wait().await.map_err(|e| e.to_string()),
+        };
         match status {
             Ok(s) => {
                 info!("Process exited with status: {}", s);
@@ -356,5 +364,22 @@ impl WslCommandExecutor {
                 WslCommandResult::error(full_output, e)
             }
         }
+    }
+
+    pub async fn check_path_exists(&self, distro_name: &str, path: &str) -> bool {
+        if path == "~" {
+            return true;
+        }
+        // wsl -d distro -e test -d path
+        let result = self.execute_command(&["-d", distro_name, "-e", "test", "-d", path]).await;
+        result.success
+    }
+
+    pub async fn check_file_executable(&self, distro_name: &str, path: &str) -> (bool, bool) {
+        // Execute [ -f path ] to check if it's a file
+        let exists_res = self.execute_command(&["-d", distro_name, "-u", "root", "-e", "test", "-f", path]).await;
+        // Execute [ -x path ] to check if it's executable
+        let exec_res = self.execute_command(&["-d", distro_name, "-u", "root", "-e", "test", "-x", path]).await;
+        (exists_res.success, exec_res.success)
     }
 }

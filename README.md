@@ -47,10 +47,11 @@ Below is a demonstration of the WSL Dashboard in action:
 - Intuitive GUI with dark mode support and smooth animations.
 - One-click management for all your WSL distributions (Start, Stop, Terminate, Unregister).
 - Quick access to distribution terminals, VS Code, and File Explorer.
+- Comprehensive distribution settings: Set as default, auto-startup on boot, and custom directory paths.
 - Real-time WSL instance status monitoring and display.
 - Export and backup to `.tar` or compressed `.tar.gz` archives.
 - Import and clone instances from backups or existing distributions.
-- Relocate large WSL instances (VHDX migration) to other disks to save C: drive space.
+- Move distribution to any specified directory (VHDX migration) to save C: drive space.
 - Smart distribution installation from Microsoft Store or GitHub.
 - Built-in RootFS download helper for manual installs.
 - Detailed insights into VHDX file location, virtual disk size, and actual disk usage.
@@ -108,11 +109,12 @@ Ensure you have the Rust toolchain (Rust 1.92+ or newer) installed.
 
 ## 🧭 Usage Overview
 
-- Manage existing distributions: start, stop, terminate, or unregister any WSL distro from the main view.
+- Manage existing distributions: start, stop, terminate, unregister, or set as default distro from the main view.
+- Configure distributions: set auto-startup behavior and customize Terminal/VS Code launch directories.
 - Open tools quickly: launch a distro in your terminal, VS Code, or File Explorer with a single click.
 - Create new instances: use the Add Instance view to install from the Microsoft Store, download RootFS images, or clone existing distributions.
 - Backup and restore: export distributions to `.tar` / `.tar.gz` archives and import them later or on another machine.
-- Move storage location: relocate large VHDX files to a different drive to save C: drive space.
+- Move distribution: move the distribution to the specified directory for better storage management.
 - Monitor status: keep an eye on real-time distribution status and storage usage while WSL Dashboard runs.
 
 ## ⚙️ Configuration & Logs

@@ -290,7 +290,10 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                     app.set_terminal_output(format!("{}\n", i18n::tr("install.step_1", &[real_id.clone()])).into());
                     info!("Starting store installation for distribution ID: {}", real_id);
                     
-                    let _ = executor.delete_distro(&real_id).await;
+                    let _ = {
+                        let state = as_ptr.lock().await;
+                        executor.delete_distro(&state.config_manager, &real_id).await
+                    };
                     
                     let mut current = app.get_terminal_output().to_string();
                     current.push_str(&format!("{}\n", i18n::t("install.step_2")));
@@ -315,14 +318,28 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
 
                     let timer = slint::Timer::default();
                     let ah_timer = ah_inner.clone();
-                    let mut dots_count = 0;
-                    timer.start(slint::TimerMode::Repeated, std::time::Duration::from_secs(20), move || {
-                         if dots_count >= 30 { return; }
+                    let start_time = std::time::Instant::now();
+                    let base_content = app.get_terminal_output().to_string();
+                    let mut frame = 0;
+
+                    timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(500), move || {
                          if let Some(app) = ah_timer.upgrade() {
-                             let mut val = app.get_terminal_output().to_string();
-                             val.push('.');
-                             app.set_terminal_output(val.into());
-                             dots_count += 1;
+                             let elapsed = start_time.elapsed().as_secs();
+                             let max_dots = (3 + (elapsed / 5)) as usize;
+                             let max_dots = max_dots.min(18);
+                             
+                             frame += 1;
+                             let cycle = 2 * (max_dots - 1);
+                             let current_dots = if cycle == 0 {
+                                 1
+                             } else {
+                                 let x = frame % cycle;
+                                 (max_dots as isize - (max_dots as isize - 1 - x as isize).abs()) as usize
+                             };
+
+                             let mut new_output = base_content.clone();
+                             new_output.push_str(&".".repeat(current_dots));
+                             app.set_terminal_output(new_output.into());
                          }
                     });
                     
@@ -459,26 +476,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                         current.push_str(&format!("{}\n", i18n::tr("install.step_2_3", &[cmd_str.clone()])));
                         app.set_terminal_output(current.into());
 
-                        let timer = slint::Timer::default();
-                        let ah_timer = ah_inner.clone();
-                        let mut dots_count = 0;
-                        timer.start(slint::TimerMode::Repeated, std::time::Duration::from_secs(5), move || {
-                             if dots_count >= 100 { return; }
-                             if let Some(app) = ah_timer.upgrade() {
-                                 let mut val = app.get_terminal_output().to_string();
-                                 val.push('.');
-                                 app.set_terminal_output(val.into());
-                                 dots_count += 1;
-                             }
-                        });
-
-
                         let result = executor.execute_command_streaming(&import_args, |_| {}).await;
-                        
-                        timer.stop();
-                        let mut current = app.get_terminal_output().to_string();
-                        current.push('\n');
-                        app.set_terminal_output(current.into());
 
                         success = result.success;
                         if !success {

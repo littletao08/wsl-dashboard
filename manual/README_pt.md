@@ -47,10 +47,11 @@ Abaixo está uma demonstração do WSL Dashboard em ação:
 - Interface gráfica intuitiva com suporte para modo escuro e animações suaves.
 - Gestão com um clique de todas as suas distribuições WSL (Iniciar, Parar, Terminar, Desregistar).
 - Acesso rápido aos terminais das distribuições, VS Code e Explorador de Ficheiros.
+- Definições de distribuição completas: Definir como predefinição, arranque automático no boot e caminhos de diretório personalizados.
 - Monitorização e visualização do estado das instâncias WSL em tempo real.
 - Exportação e cópia de segurança para ficheiros `.tar` ou arquivos comprimidos `.tar.gz`.
 - Importação e clonagem de instâncias a partir de cópias de segurança ou distribuições existentes.
-- Reinstalação de instâncias WSL volumosas (migração de VHDX) para outros discos para poupar espaço na unidade C:.
+- Mover a distribuição para qualquer diretório especificado (migração VHDX) para poupar espaço na unidade C:.
 - Instalação inteligente de distribuições a partir da Microsoft Store ou GitHub.
 - Assistente de transferência de RootFS integrado para instalações manuais.
 - Informações detalhadas sobre a localização do ficheiro VHDX, tamanho do disco virtual e utilização real do disco.
@@ -108,11 +109,12 @@ Certifique-se de que tem o conjunto de ferramentas Rust instalado (Rust 1.92+ ou
 
 ## 🧭 Visão Geral de Utilização
 
-- **Gerir distribuições existentes**: inicie, pare, termine ou desregiste qualquer distribuição WSL a partir da vista principal.
+- **Gerir distribuições existentes**: inicie, pare, termine, desregiste ou defina como distribuição predefinida a partir da vista principal.
+- **Configurar distribuições**: definir comportamento de arranque automático e personalizar diretórios de lançamento de Terminal/VS Code.
 - **Abrir ferramentas rapidamente**: inicie uma distribuição no seu terminal, VS Code ou Explorador de Ficheiros com um único clique.
 - **Criar novas instâncias**: utilize a vista Adicionar Instância para instalar a partir da Microsoft Store, transferir imagens RootFS ou clonar distribuições existentes.
 - **Cópia de segurança e restauro**: exporte distribuições para arquivos `.tar` / `.tar.gz` e importe-as mais tarde ou noutra máquina.
-- **Mover local de armazenamento**: coloque ficheiros VHDX grandes noutra unidade para poupar espaço no disco C:.
+- **Mover distribuição**: mover a distribuição para o diretório especificado para uma melhor gestão do armazenamento.
 - **Monitorizar estado**: acompanhe em tempo real o estado da distribuição e a utilização do armazenamento enquanto o WSL Dashboard está a ser executado.
 
 ## ⚙️ Configuração e Registos

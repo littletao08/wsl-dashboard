@@ -33,6 +33,7 @@ pub struct WslInformation {
     pub vhdx_path: String,
     pub vhdx_size: String,
     pub actual_used: String,
+    pub package_family_name: String,
 }
 
 impl WslDistro {
