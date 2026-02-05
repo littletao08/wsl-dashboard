@@ -37,18 +37,21 @@ pub async fn refresh_distros_ui(app_handle: slint::Weak<AppWindow>, app_state: A
     };
 
     debug!("refresh_distros_ui: Starting model conversion");
-    // get executor outside loop
-    let executor = {
+    // get executor and manual operation status outside loop
+    let (executor, is_manual_op) = {
         let app_state_lock = app_state.lock().await;
-        app_state_lock.wsl_dashboard.executor().clone()
+        (
+            app_state_lock.wsl_dashboard.executor().clone(),
+            app_state_lock.wsl_dashboard.is_manual_operation()
+        )
     };
 
     let mut intermediate_distros = Vec::new();
     for d in distros {
         let mut icon_key: Option<&'static str> = crate::utils::icon_mapper::map_name_to_icon_key(&d.name);
         
-        // If not found and running, try os-release
-        if icon_key.is_none() && d.status == wsl::models::WslStatus::Running {
+        // If not found and running, try os-release (skip if manual operation is in progress to avoid contention)
+        if !is_manual_op && icon_key.is_none() && d.status == wsl::models::WslStatus::Running {
              let result = executor.execute_command(&["-d", d.name.as_str(), "--exec", "cat", "/etc/os-release"]).await;
              if result.success {
                  for line in result.output.lines() {

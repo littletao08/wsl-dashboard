@@ -39,4 +39,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
     app.on_open_url(move |url| {
         let _ = open::that(url.as_str());
     });
+
+    let ah = app_handle.clone();
+    app.on_close_task_status(move || {
+        if let Some(app) = ah.upgrade() {
+            app.set_task_status_visible(false);
+        }
+    });
 }

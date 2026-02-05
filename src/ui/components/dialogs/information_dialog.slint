@@ -82,7 +82,7 @@ export component InformationDialog inherits Rectangle {
                 Text {
                     text: AppI18n.t("dialog.info_title", [root.info.distro_name, AppI18n.version]);
                     font-size: 18px;
-                    font-weight: 700;
+                    font-weight: 500;
                     color: Theme.text_primary;
                 }
 
@@ -97,7 +97,7 @@ export component InformationDialog inherits Rectangle {
                         border-radius: 4px;
                         Text {
                             text: "\u{E8BB}";
-                            font-family: "Segoe Fluent Icons";
+                            font-family: Theme.icon_font;
                             font-size: 14px;
                             color: Theme.text_primary;
                             horizontal-alignment: center;
@@ -153,7 +153,7 @@ export component InformationDialog inherits Rectangle {
                                 color: Theme.accent;
                                 font-family: "Consolas";
                                 font-size: 13px;
-                                font-weight: 600;
+                                font-weight: 500;
                                 vertical-alignment: center;
                             }
                         }
@@ -186,7 +186,7 @@ export component InformationDialog inherits Rectangle {
                                 color: Theme.accent;
                                 font-family: "Consolas"; // Match font
                                 font-size: 13px;
-                                font-weight: 600;
+                                font-weight: 500;
                                 vertical-alignment: center;
                             }
                         }
@@ -216,7 +216,7 @@ export component InformationDialog inherits Rectangle {
                         text: AppI18n.t("dialog.confirm", [AppI18n.version]);
                         color: white;
                         font-size: 13px;
-                        font-weight: 600;
+                        font-weight: 500;
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }

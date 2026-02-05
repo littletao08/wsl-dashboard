@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "WSL Paneli"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "Taşı"
 move_success = "'{0}' örneği başarıyla şuraya taşındı:\n{1}"
 move_failed = "Taşıma başarısız: {0}"
 move_failed_backup = "Taşıma başarısız (Yedek kaydedildi):\nDağıtım kaydı silindi, ancak taşıma mantığı başarısız oldu.\nYedek dosyası şurada: {0}\nKurtarmak için bu dosyayı manuel olarak içe aktarabilirsiniz."
+move_wsl2_shutdown_warning = "WSL2 dağıtımını taşımak, dosya tanıtıcılarını serbest bırakmak için çalışan tüm WSL örneklerinin kapatılmasını gerektirir.\n\nAşağıdaki dağıtımlar durdurulacak: {0}\n\nDevam etmek için lütfen Onayla'ya tıklayın."
+move_wsl2_shutdown_warning_no_running = "WSL2 dağıtımını taşımak, dosya tanıtıcılarının tamamen serbest bırakıldığından emin olmak için wsl --shutdown komutunun çalıştırılmasını gerektirir.\n\nDevam etmek için lütfen Onayla'ya tıklayın."
 select_move_dir = "Taşıma Kurulum Dizinini Seç"
 operation_in_progress = "Bir işlem (Dışa Aktarma, Taşıma veya Klonlama) zaten devam ediyor. Lütfen tamamlanmasını bekleyin."
 archive = "Arşiv"
@@ -141,9 +143,16 @@ update_failed = "Güncelleme kontrolü başarısız: {0}"
 starting = "Başlatılıyor..."
 stopping = "Durduruluyor..."
 restarting = "Yeniden başlatılıyor..."
+deleting = "Siliniyor ..."
 exporting = "Dışa aktarılıyor..."
+exporting_msg = "{0} dışa aktarılıyor, dosya: {1}"
 cloning = "Klonlanıyor..."
+cloning_step1 = "{0} klonlanıyor: (1/2) Dışa aktarılıyor, dosya: {1}"
+cloning_step2 = "{0} klonlanıyor: (2/2) İçe aktarılıyor"
 moving = "Taşınıyor..."
+moving_wsl2_msg = "{0} taşınıyor, dosya boyutu: {1}"
+moving_wsl1_step1 = "{0} taşınıyor: (1/2) Dışa aktarılıyor, dosya: {1}"
+moving_wsl1_step2 = "{0} taşınıyor: (2/2) İçe aktarılıyor"
 fetching_distros = "Dağıtımlar getiriliyor..."
 fetching_info = "Bilgiler getiriliyor..."
 

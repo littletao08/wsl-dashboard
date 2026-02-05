@@ -8,6 +8,7 @@ pub mod models;
 pub use models::*;
 
 // Configuration manager, responsible for loading, saving, and managing application configuration
+#[derive(Clone)]
 pub struct ConfigManager {
     // Configuration file path
     config_path: PathBuf,

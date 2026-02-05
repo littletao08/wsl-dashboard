@@ -37,7 +37,7 @@ export component Sidebar inherits Rectangle {
                 Text {
                     text: "\u{E700}";
                     font-size: 16px;
-                    font-family: "Segoe Fluent Icons";
+                    font-family: Theme.icon_font;
                     color: touch_menu.has-hover ? Theme.accent : Theme.text_secondary;
                     vertical-alignment: center;
                     horizontal-alignment: center;
@@ -115,7 +115,7 @@ export component Sidebar inherits Rectangle {
         width: 16px;
         height: 16px;
         Image {
-            source: @image-url("../../../assets/logo/logo.png");
+            source: @image-url("../../../assets/logo/mini.png");
             width: 100%;
             height: 100%;
             image-fit: contain;

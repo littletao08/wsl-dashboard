@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "Painel WSL"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "Mover"
 move_success = "Instância '{0}' movida com sucesso para:\n{1}"
 move_failed = "Falha ao mover: {0}"
 move_failed_backup = "Falha ao mover (Backup salvo):\nA distribuição foi cancelada, mas a lógica de movimentação falhou.\nO arquivo de backup está localizado em: {0}\nVocê pode importar este arquivo manualmente para recuperar."
+move_wsl2_shutdown_warning = "Mover uma distribuição WSL2 requer o encerramento de todas as instâncias WSL em execução para liberar os identificadores de arquivo.\n\nAs seguintes distribuições serão interrompidas: {0}\n\nClique em Confirmar para continuar."
+move_wsl2_shutdown_warning_no_running = "Mover uma distribuição WSL2 requer a execução de wsl --shutdown para garantir que os identificadores de arquivo sejam totalmente liberados.\n\nClique em Confirmar para continuar."
 select_move_dir = "Selecionar diretório de instalação para mover"
 operation_in_progress = "Uma operação (Exportar, Mover ou Clonar) já está em andamento. Aguarde até que seja concluída."
 archive = "Arquivo"
@@ -141,9 +143,16 @@ update_failed = "Falha na verificação de atualização: {0}"
 starting = "Iniciando..."
 stopping = "Parando..."
 restarting = "Reiniciando..."
+deleting = "Excluindo ..."
 exporting = "Exportando..."
+exporting_msg = "Exportando {0}, arquivo: {1}"
 cloning = "Clonando..."
+cloning_step1 = "Clonando {0}: (1/2) Exportando, arquivo: {1}"
+cloning_step2 = "Clonando {0}: (2/2) Importando"
 moving = "Movendo..."
+moving_wsl2_msg = "Movendo {0}, tamanho do arquivo: {1}"
+moving_wsl1_step1 = "Movendo {0}: (1/2) Exportando, arquivo: {1}"
+moving_wsl1_step2 = "Movendo {0}: (2/2) Importando"
 fetching_distros = "Buscando distribuições..."
 fetching_info = "Buscando informações..."
 

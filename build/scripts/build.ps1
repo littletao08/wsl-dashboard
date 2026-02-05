@@ -4,12 +4,12 @@ Write-Host "Building Windows executable for WSL Dashboard..." -ForegroundColor G
 
 # Check rustup toolchain
 $defaultToolchain = rustup default 2>&1
-if ($defaultToolchain -notmatch "x86_64-pc-windows-gnu") {
-    Write-Host "[!] Error: Current default toolchain is not x86_64-pc-windows-gnu" -ForegroundColor Red
-    Write-Host "To ensure packaging compatibility and reduce dependencies, this project requires building with the x86_64-pc-windows-gnu toolchain." -ForegroundColor Yellow
+if ($defaultToolchain -notmatch "x86_64-pc-windows-msvc") {
+    Write-Host "[!] Error: Current default toolchain is not x86_64-pc-windows-msvc" -ForegroundColor Red
+    Write-Host "To ensure packaging compatibility and reduce dependencies, this project requires building with the x86_64-pc-windows-msvc toolchain." -ForegroundColor Yellow
     Write-Host "`nPlease follow these steps to install and set as default:" -ForegroundColor White
-    Write-Host "1. Install toolchain: " -NoNewline; Write-Host "rustup toolchain install stable-x86_64-pc-windows-gnu" -ForegroundColor Cyan
-    Write-Host "2. Set as default: " -NoNewline; Write-Host "rustup default stable-x86_64-pc-windows-gnu" -ForegroundColor Cyan
+    Write-Host "1. Install toolchain: " -NoNewline; Write-Host "rustup toolchain install stable-x86_64-pc-windows-msvc" -ForegroundColor Cyan
+    Write-Host "2. Set as default: " -NoNewline; Write-Host "rustup default stable-x86_64-pc-windows-msvc" -ForegroundColor Cyan
     Write-Host "`nRe-run this script after installation is complete." -ForegroundColor Yellow
     exit 1
 }
@@ -46,7 +46,7 @@ if (-not (Test-Path $releaseDir)) {
 }
 
 # Copy and rename executable
-# Use default release directory (determined by system default toolchain x86_64-pc-windows-gnu)
+# Use default release directory (determined by system default toolchain x86_64-pc-windows-msvc)
 $sourcePath = "./target/release/wsldashboard.exe"
 $destinationPath = "$releaseDir/wsldashboard.v$version.exe"
 
@@ -59,6 +59,15 @@ if (Test-Path $destinationPath) {
 }
 
 Copy-Item -Path $sourcePath -Destination $destinationPath -Force
+
+# Check for UPX and compress if available
+if (Get-Command "upx" -ErrorAction SilentlyContinue) {
+    Write-Host "UPX detected, compressing executable..." -ForegroundColor Yellow
+    upx --best --lzma $destinationPath
+}
+else {
+    Write-Host "Tips: Install UPX to further compress the executable (e.g. 'winget install upx')" -ForegroundColor DarkGray
+}
 
 Pop-Location
 

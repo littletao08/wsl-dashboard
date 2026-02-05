@@ -24,6 +24,7 @@ export component SidebarItem inherits Rectangle {
             text: root.text;
             color: white;
             font-size: 12px;
+            font-family: Theme.default_font;
             horizontal-alignment: center;
             vertical-alignment: center;
         }
@@ -35,7 +36,7 @@ export component SidebarItem inherits Rectangle {
         Text {
             text: icon;
             font-size: 16px;
-            font-family: "Segoe Fluent Icons";
+            font-family: Theme.icon_font;
             color: (selected || touch.has-hover) ? Theme.accent : Theme.text_secondary;
             vertical-alignment: center;
             horizontal-alignment: center;
@@ -44,7 +45,8 @@ export component SidebarItem inherits Rectangle {
 
         if (!collapsed && text != ""): Text {
             text: text;
-            font-size: 13px;
+            font-size: 14px;
+            font-family: Theme.default_font;
             font-weight: selected ? 500 : 400;
             color: (selected || touch.has-hover) ? Theme.text_primary : Theme.text_secondary;
             vertical-alignment: center;
@@ -98,7 +100,7 @@ export component ActionIcon inherits Rectangle {
     Text {
         text: icon;
         font-size: 14px;
-        font-family: is_font_icon ? "Segoe Fluent Icons" : "default";
+        font-family: is_font_icon ? Theme.icon_font : "default";
         color: Theme.text_secondary;
         horizontal-alignment: center;
         vertical-alignment: center;
@@ -121,7 +123,7 @@ export component WindowControlButton inherits Rectangle {
     background: touch.has-hover ? hover-color : transparent;
     Text {
         text: text;
-        font-family: "Segoe Fluent Icons";
+        font-family: Theme.icon_font;
         font-size: 12px;
         color: (touch.has-hover && root.hover-color == #E81123) ? #FFFFFF : text-color;
         horizontal-alignment: center;

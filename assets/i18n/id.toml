@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "Dasbor WSL"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "Pindah"
 move_success = "Instance '{0}' berhasil dipindahkan ke:\n{1}"
 move_failed = "Gagal memindahkan: {0}"
 move_failed_backup = "Gagal memindahkan (Cadangan disimpan):\nDistribusi tidak terdaftar, tetapi logika pemindahan gagal.\nFile cadangan berada di: {0}\nAnda dapat mengimpor file ini secara manual untuk memulihkan."
+move_wsl2_shutdown_warning = "Memindahkan distribusi WSL2 mengharuskan mematikan semua instance WSL yang berjalan untuk melepaskan pegangan file.\n\nDistribusi berikut akan dihentikan: {0}\n\nSilakan klik Konfirmasi untuk melanjutkan."
+move_wsl2_shutdown_warning_no_running = "Memindahkan distribusi WSL2 mengharuskan eksekusi wsl --shutdown untuk memastikan pegangan file dilepaskan sepenuhnya.\n\nSilakan klik Konfirmasi untuk melanjutkan."
 select_move_dir = "Pilih Direktori Instalasi Pemindahan"
 operation_in_progress = "Operasi (Ekspor, Pindah, atau Klon) sedang berlangsung. Harap tunggu hingga selesai."
 archive = "Arsip"
@@ -141,9 +143,16 @@ update_failed = "Pemeriksaan pembaruan gagal: {0}"
 starting = "Memulai..."
 stopping = "Menghentikan..."
 restarting = "Memulai ulang..."
+deleting = "Menghapus ..."
 exporting = "Mengekspor..."
+exporting_msg = "Mengekspor {0}, file: {1}"
 cloning = "Mengkloning..."
+cloning_step1 = "Mengkloning {0}: (1/2) Mengekspor, file: {1}"
+cloning_step2 = "Mengkloning {0}: (2/2) Mengimpor"
 moving = "Memindahkan..."
+moving_wsl2_msg = "Memindahkan {0}, ukuran file: {1}"
+moving_wsl1_step1 = "Memindahkan {0}: (1/2) Mengekspor, file: {1}"
+moving_wsl1_step2 = "Memindahkan {0}: (2/2) Mengimpor"
 fetching_distros = "Mengambil distribusi..."
 fetching_info = "Mengambil informasi..."
 

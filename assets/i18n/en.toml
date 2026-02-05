@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "WSL Dashboard"
 
 [sidebar]
@@ -75,6 +75,8 @@ move_confirm = "Move"
 move_success = "Instance '{0}' moved successfully to:\n{1}"
 move_failed = "Move failed: {0}"
 move_failed_backup = "Move failed (Backup saved):\nThe distribution was unregistered, but the move logic failed.\nBackup file is located at: {0}\nYou can manually import this file to recover."
+move_wsl2_shutdown_warning = "Moving a WSL2 distribution requires shutting down all running WSL instances to release file handles.\n\nThe following distributions will be stopped: {0}\n\nPlease click Confirm to proceed."
+move_wsl2_shutdown_warning_no_running = "Moving a WSL2 distribution requires executing wsl --shutdown to ensure file handles are fully released.\n\nPlease click Confirm to proceed."
 processing = "Processing..."
 target_path = "Target Path"
 new_name = "New Instance Name"
@@ -142,9 +144,16 @@ update_failed = "Update check failed: {0}"
 starting = "Starting ..."
 stopping = "Stopping ..."
 restarting = "Restarting ..."
+deleting = "Deleting ..."
 exporting = "Exporting ..."
+exporting_msg = "{0} exporting, file: {1}"
 cloning = "Cloning ..."
+cloning_step1 = "{0} cloning: (1/2) Exporting, file: {1}"
+cloning_step2 = "{0} cloning: (2/2) Importing"
 moving = "Moving ..."
+moving_wsl2_msg = "{0} moving, file size: {1}"
+moving_wsl1_step1 = "{0} moving: (1/2) Exporting, file: {1}"
+moving_wsl1_step2 = "{0} moving: (2/2) Importing"
 fetching_distros = "Fetching distributions..."
 fetching_info = "Fetching information..."
 

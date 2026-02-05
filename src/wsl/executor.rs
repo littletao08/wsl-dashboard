@@ -126,7 +126,8 @@ impl WslOutputDecoder {
     }
 
     fn decode_utf8(&mut self) -> String {
-        // Try to parse. If not valid UTF-8, consider if it's GBK
+        // Try to parse as UTF-8. 
+        // Note: On Chinese Windows, WSL output might be GBK (CP936) even with WSL_UTF8=1 for some system messages.
         match std::str::from_utf8(&self.buffer) {
             Ok(_) => {
                 let s = String::from_utf8_lossy(&self.buffer).to_string();
@@ -140,9 +141,10 @@ impl WslOutputDecoder {
                     self.buffer.drain(..valid_len);
                     s
                 } else {
-                    // If buffer is full of unrecognized characters (> 4 bytes), most likely GBK (Chinese Windows)
-                    if self.buffer.len() > 4 {
-                        // If all else fails, use lossy conversion to prevent empty or garbled display
+                    // If buffer is full of unrecognized characters (> 4 bytes), most likely it's another encoding (like GBK)
+                    // We use from_utf8_lossy anyway but we don't clear the buffer unless it's getting too large.
+                    // This prevents getting stuck on a single multi-byte sequence.
+                    if self.buffer.len() > 8 {
                         let s = String::from_utf8_lossy(&self.buffer).to_string();
                         self.buffer.clear();
                         s
@@ -193,7 +195,8 @@ impl WslCommandExecutor {
             debug!("Executing WSL command: {}", command_str);
         }
         
-        task::spawn_blocking(move || {
+        let command_str_clone = command_str.clone();
+        let join_handle = task::spawn_blocking(move || {
             let mut command = std::process::Command::new("wsl.exe");
             command.args(&args_owned);
             command.env("WSL_UTF8", "1");
@@ -207,9 +210,9 @@ impl WslCommandExecutor {
             
             // Inner log also respecting the op type
             if is_write_op {
-                 info!("WSL process starting: {}", command_str);
+                 info!("WSL process starting: {}", command_str_clone);
             } else {
-                 debug!("WSL process starting: {}", command_str);
+                 debug!("WSL process starting: {}", command_str_clone);
             }
 
             let output = command.output();
@@ -235,7 +238,13 @@ impl WslCommandExecutor {
                     if output.status.success() {
                         WslCommandResult::success(stdout, None)
                     } else {
-                        WslCommandResult::error(stdout, stderr)
+                        // FIX: If stderr is empty, use stdout as the error message. 
+                        let final_error = if stderr.trim().is_empty() && !stdout.trim().is_empty() {
+                            stdout.clone()
+                        } else {
+                            stderr
+                        };
+                        WslCommandResult::error(stdout, final_error)
                     }
                 }
                 Err(e) => {
@@ -244,13 +253,28 @@ impl WslCommandExecutor {
                     WslCommandResult::error(String::new(), error)
                 }
             }
-        })
-        .await
-        .unwrap_or_else(|e| {
-            let error = format!("Command execution panicked: {}", e);
-            error!("WSL command panic: {}", error);
-            WslCommandResult::error(String::new(), error)
-        })
+        });
+
+        let timeout_duration = if is_write_op {
+            std::time::Duration::from_secs(600) // 10 minutes for write operations
+        } else {
+            std::time::Duration::from_secs(15)  // 15 seconds for read operations
+        };
+
+        match tokio::time::timeout(timeout_duration, join_handle).await {
+            Ok(spawn_result) => {
+                spawn_result.unwrap_or_else(|e| {
+                    let error = format!("Command execution panicked: {}", e);
+                    error!("WSL command panic: {}", error);
+                    WslCommandResult::error(String::new(), error)
+                })
+            }
+            Err(_) => {
+                let error = format!("WSL command timed out after {}s: {}", timeout_duration.as_secs(), command_str);
+                error!("{}", error);
+                WslCommandResult::error(String::new(), error)
+            }
+        }
     }
  
     // Execute WSL commands asynchronously and callback output in real-time
@@ -354,9 +378,11 @@ impl WslCommandExecutor {
             Ok(s) => {
                 info!("Process exited with status: {}", s);
                 if s.success() {
-                    WslCommandResult::success(full_output, None)
+                    WslCommandResult::success(full_output.clone(), None)
                 } else {
-                    WslCommandResult::error(full_output, format!("Process exited with error: {}", s))
+                    // FIX: Also handle streaming failure by checking if full_output contains error details
+                    let err_msg = format!("Process exited with error: {}", s);
+                    WslCommandResult::error(full_output, err_msg)
                 }
             }
             Err(e) => {

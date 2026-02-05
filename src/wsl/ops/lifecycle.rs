@@ -105,28 +105,58 @@ pub async fn delete_distro(executor: &WslCommandExecutor, config_manager: &Confi
     {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
+        // Set kill_on_drop so the process is terminated if wait_with_output times out and the future is dropped
+        cmd.kill_on_drop(true);
     }
 
     let mut pfn_to_remove = None;
-    if let Ok(output) = cmd.output().await {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&stdout) {
-            let pfn = parsed["pfn"].as_str().unwrap_or("").to_string();
-            let should_remove = parsed["should_remove"].as_bool().unwrap_or(false);
-            if !pfn.is_empty() && should_remove {
-                pfn_to_remove = Some(pfn);
-                info!("Distribution '{}' is associated with package '{}' and is the only instance using it.", distro_name, pfn_to_remove.as_ref().unwrap());
-            } else if !pfn.is_empty() {
-                info!("Distribution '{}' is associated with package '{}', but other instances still use this launcher.", distro_name, pfn);
+    
+    // Spawn and wait for output with timeout
+    let output_res = tokio::time::timeout(
+        std::time::Duration::from_secs(15), 
+        async {
+            match cmd.spawn() {
+                Ok(child) => child.wait_with_output().await,
+                Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
             }
+        }
+    ).await;
+
+    match output_res {
+        Ok(Ok(output)) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&stdout) {
+                let pfn = parsed["pfn"].as_str().unwrap_or("").to_string();
+                let should_remove = parsed["should_remove"].as_bool().unwrap_or(false);
+                if !pfn.is_empty() && should_remove {
+                    pfn_to_remove = Some(pfn);
+                    info!("Distribution '{}' is associated with package '{}' and is the only instance using it.", distro_name, pfn_to_remove.as_ref().unwrap());
+                } else if !pfn.is_empty() {
+                    info!("Distribution '{}' is associated with package '{}', but other instances still use this launcher.", distro_name, pfn);
+                }
+            }
+        }
+        Ok(Err(e)) => {
+            warn!("Failed to get output from PowerShell PFN detection: {}", e);
+        }
+        Err(_) => {
+            warn!("PowerShell PFN detection timed out after 15s (process killed by kill_on_drop)");
         }
     }
 
     // 2. Extra Cleanups: config file and autostart vbs
     info!("Cleaning up configurations for '{}' before unregistering", distro_name);
     
-    // a. Remove from instances.toml
-    if let Err(e) = config_manager.remove_instance_config(distro_name) {
+    // a. Remove from instances.toml (Use spawn_blocking for sync config management)
+    let cm = config_manager.clone();
+    let dn = distro_name.to_string();
+    let removal_res = task::spawn_blocking(move || {
+        cm.remove_instance_config(&dn).map_err(|e| e.to_string())
+    }).await;
+
+    if let Err(e) = removal_res {
+        warn!("Task join error during instance config removal: {}", e);
+    } else if let Ok(Err(e)) = removal_res {
         warn!("Failed to remove instance config for '{}': {}", distro_name, e);
     }
 
@@ -145,51 +175,67 @@ pub async fn delete_distro(executor: &WslCommandExecutor, config_manager: &Confi
 
     info!("Successfully unregistered WSL distro '{}'", distro_name);
 
-    // 3. Remove Appx package if needed
+    // 3. Remove Appx package if needed (Run in background to avoid blocking distro removal)
     if let Some(pfn) = pfn_to_remove {
-        info!("Initiating launcher cleanup for PackageFamilyName: {}", pfn);
+        info!("Initiating launcher cleanup for PackageFamilyName: {} (Background)", pfn);
         
-        let uninstall_script = format!(r#"
-            $pfn = "{}"
-            # Try to find the package by FamilyName, fall back to Name pattern match if exact match fails
-            $packages = Get-AppxPackage | Where-Object {{ 
-                $_.PackageFamilyName -eq $pfn -or 
-                $_.PackageFullName -like "*$pfn*" -or
-                ($_.Name -like "*$($pfn.Split('_')[0])*")
-            }}
-
-            if ($packages) {{
-                foreach ($pkg in $packages) {{
-                    Write-Host "Found associated package: $($pkg.PackageFullName). Uninstalling..."
-                    Remove-AppxPackage -Package $pkg.PackageFullName -ErrorAction SilentlyContinue
+        tokio::spawn(async move {
+            let uninstall_script = format!(r#"
+                $pfn = "{}"
+                # Faster search by splitting PFN and using Name wildcard
+                $namePart = $pfn.Split('_')[0]
+                $packages = Get-AppxPackage -Name "*$namePart*" | Where-Object {{ 
+                    $_.PackageFamilyName -eq $pfn -or 
+                    $_.PackageFullName -like "*$pfn*"
                 }}
-            }} else {{
-                Write-Host "No associated Appx package could be matches for: $pfn"
-            }}
-        "#, pfn);
 
-        let mut uninstall_cmd = Command::new("powershell");
-        uninstall_cmd.args(&["-NoProfile", "-NonInteractive", "-Command", &uninstall_script]);
-        #[cfg(windows)]
-        {
-            const CREATE_NO_WINDOW: u32 = 0x08000000;
-            uninstall_cmd.creation_flags(CREATE_NO_WINDOW);
-        }
+                if ($packages) {{
+                    foreach ($pkg in $packages) {{
+                        Write-Host "Found associated package: $($pkg.PackageFullName). Uninstalling..."
+                        Remove-AppxPackage -Package $pkg.PackageFullName -ErrorAction SilentlyContinue
+                    }}
+                }} else {{
+                    Write-Host "No associated Appx package could be matches for: $pfn"
+                }}
+            "#, pfn);
 
-        match uninstall_cmd.output().await {
-            Ok(output) => {
-                let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if !stdout.is_empty() { 
-                    info!("Launcher cleanup detail: {}", stdout); 
+            let mut uninstall_cmd = Command::new("powershell");
+            uninstall_cmd.args(&["-NoProfile", "-NonInteractive", "-Command", &uninstall_script]);
+            #[cfg(windows)]
+            {
+                const CREATE_NO_WINDOW: u32 = 0x08000000;
+                uninstall_cmd.creation_flags(CREATE_NO_WINDOW);
+                uninstall_cmd.kill_on_drop(true);
+            }
+
+            let cleanup_res = tokio::time::timeout(
+                std::time::Duration::from_secs(15), 
+                async {
+                    match uninstall_cmd.spawn() {
+                        Ok(child) => child.wait_with_output().await,
+                        Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+                    }
+                }
+            ).await;
+
+            match cleanup_res {
+                Ok(Ok(output)) => {
+                    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !stdout.is_empty() { 
+                        info!("Launcher cleanup detail: {}", stdout); 
+                    }
+                }
+                Ok(Err(e)) => {
+                    error!("Failed to execute launcher cleanup: {}", e);
+                }
+                Err(_) => {
+                    warn!("Launcher cleanup timed out after 15s (process killed by kill_on_drop)");
                 }
             }
-            Err(e) => {
-                error!("Failed to execute launcher cleanup: {}", e);
-            }
-        }
+        });
     }
 
-    WslCommandResult::success(format!("Distro '{}' deleted and launcher cleaned up if applicable", distro_name), None)
+    WslCommandResult::success(format!("Distro '{}' deleted and launcher cleanup initiated", distro_name), None)
 }
 
 pub async fn move_distro(executor: &WslCommandExecutor, distro_name: &str, new_path: &str) -> WslCommandResult<String> {

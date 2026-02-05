@@ -1,4 +1,4 @@
-use std::fs;
+use tokio::fs;
 use std::time::Duration;
 use tracing::{info, warn};
 
@@ -29,20 +29,16 @@ async fn write_with_timeout(
     // Use tokio::time::timeout to set a 5-second timeout
     let result = tokio::time::timeout(
         Duration::from_secs(5),
-        tokio::task::spawn_blocking(move || fs::write(&path, content))
+        fs::write(&path, content)
     ).await;
     
     match result {
-        Ok(Ok(Ok(()))) => {
+        Ok(Ok(())) => {
             // Write succeeded
             Ok(())
         }
-        Ok(Ok(Err(e))) => {
-            // Write failed
-            Err(Box::new(e))
-        }
         Ok(Err(e)) => {
-            // spawn_blocking failed
+            // Write failed
             Err(Box::new(e))
         }
         Err(_) => {
@@ -58,7 +54,7 @@ pub async fn update_windows_autostart(distro_name: &str, enable: bool) -> Result
     let startup_dir = get_startup_dir()?;
     
     if !startup_dir.exists() {
-        fs::create_dir_all(&startup_dir)?;
+        fs::create_dir_all(&startup_dir).await?;
     }
     
     let vbs_path = get_vbs_path()?;
@@ -66,8 +62,8 @@ pub async fn update_windows_autostart(distro_name: &str, enable: bool) -> Result
     let header = "Set ws = WScript.CreateObject(\"WScript.Shell\")";
 
     let mut lines: Vec<String> = if vbs_path.exists() {
-        fs::read_to_string(&vbs_path)?
-            .lines()
+        let content = fs::read_to_string(&vbs_path).await?;
+        content.lines()
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect()
@@ -76,7 +72,7 @@ pub async fn update_windows_autostart(distro_name: &str, enable: bool) -> Result
     };
 
     // Ensure header is always at the top
-    if !lines.iter().any(|l| l.contains("WScript.CreateObject")) {
+    if !lines.iter().any(|l: &String| l.contains("WScript.CreateObject")) {
         lines.insert(0, header.to_string());
     }
 
@@ -115,6 +111,7 @@ pub fn is_autostart_enabled(distro_name: &str) -> bool {
 
     let line_to_check = format!("ws.run \"wsl -d {} -u root /etc/init.wsl-dashboard start\", vbhide", distro_name);
     
+    // Explicitly use std::fs for sync read to avoid any tokio::fs async/sync confusion
     if let Ok(content) = std::fs::read_to_string(&vbs_path) {
         content.lines().any(|l| l.trim() == line_to_check)
     } else {

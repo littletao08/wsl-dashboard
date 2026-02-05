@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "WSLダッシュボード"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "移動"
 move_success = "インスタンス '{0}' は正常に以下へ移動されました：\n{1}"
 move_failed = "移動に失敗しました：{0}"
 move_failed_backup = "移動に失敗しました（バックアップ保存済み）：\nディストリビューションの登録は解除されましたが、移動ロジックが失敗しました。\nバックアップファイルは以下にあります：{0}\nこのファイルを手動でインポートして復元できます。"
+move_wsl2_shutdown_warning = "WSL2 ディストリビューションを移動するには、ファイルハンドルを解放するために実行中のすべての WS インスタンスをシャットダウンする必要があります。\n\n以下のディストリビューションが停止されます: {0}\n\n続行するには「確認」をクリックしてください。"
+move_wsl2_shutdown_warning_no_running = "WSL2 ディストリビューションを移動するには、ファイルハンドルが完全に解放されるように wsl --shutdown を実行する必要があります。\n\n続行するには「確認」をクリックしてください。"
 select_move_dir = "移動先のインストールディレクトリを選択"
 operation_in_progress = "操作（エクスポート、移動、またはクローン）が既に進行中です。完了するまでお待ちください。"
 archive = "アーカイブ"
@@ -141,9 +143,16 @@ update_failed = "アップデートの確認に失敗しました: {0}"
 starting = "起動中..."
 stopping = "停止中..."
 restarting = "再起動中..."
+deleting = "削除中 ..."
 exporting = "エクスポート中..."
+exporting_msg = "{0} をエクスポート中、ファイル: {1}"
 cloning = "複製中..."
+cloning_step1 = "{0} を複製中: (1/2) エクスポート中、ファイル: {1}"
+cloning_step2 = "{0} を複製中: (2/2) インポート中"
 moving = "移動中..."
+moving_wsl2_msg = "{0} を移動中、ファイルサイズ: {1}"
+moving_wsl1_step1 = "{0} を移動中: (1/2) エクスポート中、ファイル: {1}"
+moving_wsl1_step2 = "{0} を移動中: (2/2) インポート中"
 fetching_distros = "ディストリビューションを取得中..."
 fetching_info = "情報を取得中..."
 

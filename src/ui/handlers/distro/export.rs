@@ -63,13 +63,15 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let target_path = target_path.to_string();
 
         let _ = slint::spawn_local(async move {
-            // Show exporting indicator
+            // Show exporting indicator using TaskStatusToast
+            let stop_signal = Arc::new(std::sync::atomic::AtomicBool::new(false));
             if let Some(app) = ah_clone.upgrade() {
                 app.set_is_exporting(true);
-                app.set_operation_text(i18n::t("operation.exporting").into());
-                app.set_show_operation(true);
+                let initial_msg = i18n::tr("operation.exporting_msg", &[distro_source.clone(), "0 MB".to_string()]);
+                app.set_task_status_text(initial_msg.into());
+                app.set_task_status_visible(true);
             }
-
+            
             // Conflict resolution: add timestamp if file exists (e.g. Debian13.0.20260113141025.tar.gz)
             let mut filename = format!("{}.tar.gz", distro_source);
             let mut export_file = std::path::Path::new(&target_path).join(&filename);
@@ -81,15 +83,31 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             }
             
             let export_file_str = export_file.to_string_lossy().to_string();
+            
+            // Start progress monitor
+            super::spawn_file_size_monitor(
+                ah_clone.clone(),
+                export_file_str.clone(),
+                distro_source.clone(),
+                "operation.exporting_msg".into(),
+                stop_signal.clone()
+            );
+
             let result = {
-                let app_state = as_ptr.lock().await;
+                let dashboard = {
+                    let state = as_ptr.lock().await;
+                    state.wsl_dashboard.clone()
+                };
                 info!("Exporting distribution '{}' to '{}'...", distro_source, export_file_str);
-                app_state.wsl_dashboard.export_distro(&distro_source, &export_file_str).await
+                dashboard.export_distro(&distro_source, &export_file_str).await
             };
+
+            // Stop monitor
+            stop_signal.store(true, std::sync::atomic::Ordering::Relaxed);
 
             if let Some(app) = ah_clone.upgrade() {
                 // Hide exporting indicator
-                app.set_show_operation(false);
+                app.set_task_status_visible(false);
                 app.set_is_exporting(false);
                 
                 if result.success {

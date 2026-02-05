@@ -14,8 +14,8 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
             if let Some(app) = ah.upgrade() {
-                app.set_operation_text(i18n::t("operation.starting").into());
-                app.set_show_operation(true);
+                app.set_task_status_text(i18n::t("operation.starting").into());
+                app.set_task_status_visible(true);
             }
             {
                 let app_state = as_ptr.lock().await;
@@ -24,7 +24,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                 manager.start_distro(&name).await;
             }
             if let Some(app) = ah.upgrade() {
-                app.set_show_operation(false);
+                app.set_task_status_visible(false);
             }
             refresh_distros_ui(ah, as_ptr).await;
         });
@@ -39,8 +39,8 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
             if let Some(app) = ah.upgrade() {
-                app.set_operation_text(i18n::t("operation.stopping").into());
-                app.set_show_operation(true);
+                app.set_task_status_text(i18n::t("operation.stopping").into());
+                app.set_task_status_visible(true);
             }
             {
                 let app_state = as_ptr.lock().await;
@@ -49,7 +49,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                 manager.stop_distro(&name).await;
             }
             if let Some(app) = ah.upgrade() {
-                app.set_show_operation(false);
+                app.set_task_status_visible(false);
             }
             refresh_distros_ui(ah, as_ptr).await;
         });
@@ -64,8 +64,8 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
             if let Some(app) = ah.upgrade() {
-                app.set_operation_text(i18n::t("operation.restarting").into());
-                app.set_show_operation(true);
+                app.set_task_status_text(i18n::t("operation.restarting").into());
+                app.set_task_status_visible(true);
             }
             {
                 let app_state = as_ptr.lock().await;
@@ -74,7 +74,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                 manager.restart_distro(&name).await;
             }
             if let Some(app) = ah.upgrade() {
-                app.set_show_operation(false);
+                app.set_task_status_visible(false);
             }
             refresh_distros_ui(ah, as_ptr).await;
         });
@@ -88,10 +88,20 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let ah = ah.clone();
         let as_ptr = as_ptr.clone();
         let _ = slint::spawn_local(async move {
-            {
+            if let Some(app) = ah.upgrade() {
+                app.set_task_status_text(i18n::t("operation.deleting").into());
+                app.set_task_status_visible(true);
+            }
+            let (dashboard, config_manager) = {
                 let app_state = as_ptr.lock().await;
-                // Perform actual WSL deletion (includes config and autostart cleanup)
-                app_state.wsl_dashboard.delete_distro(&app_state.config_manager, &name).await;
+                (app_state.wsl_dashboard.clone(), app_state.config_manager.clone())
+            };
+            // Perform actual WSL deletion (includes config and autostart cleanup)
+            // Lock is released before this await
+            dashboard.delete_distro(&config_manager, &name).await;
+            
+            if let Some(app) = ah.upgrade() {
+                app.set_task_status_visible(false);
             }
             refresh_distros_ui(ah, as_ptr).await;
         });

@@ -53,11 +53,45 @@ pub struct LoggingSystem {
     pub level: Arc<AtomicU8>,
 }
 
-pub fn init_logging(log_dir: &str, level_num: u8) -> LoggingSystem {
+use tracing_subscriber::fmt::time::FormatTime;
+use chrono::FixedOffset;
+
+#[derive(Clone, Copy)]
+struct LocalTimer {
+    offset: FixedOffset,
+}
+
+impl FormatTime for LocalTimer {
+    fn format_time(&self, w: &mut fmt::format::Writer<'_>) -> std::fmt::Result {
+        let now = chrono::Utc::now().with_timezone(&self.offset);
+        write!(w, "{}", now.format("%Y-%m-%dT%H:%M:%S%.6f%:z"))
+    }
+}
+
+fn parse_timezone(tz_str: &str) -> FixedOffset {
+    // Expected format from settings: "UTC+08:00"
+    let clean_tz = tz_str.trim_start_matches("UTC");
+    if clean_tz.is_empty() {
+        return FixedOffset::east_opt(0).unwrap();
+    }
+
+    // Attempt to parse offset part like "+08:00" or "+0800"
+    match chrono::DateTime::parse_from_rfc3339(&format!("2024-01-01T00:00:00{}", clean_tz)) {
+        Ok(dt) => *dt.offset(),
+        Err(_) => {
+            // Fallback: search for sign and try parsing hours
+            FixedOffset::east_opt(0).unwrap()
+        }
+    }
+}
+
+pub fn init_logging(log_dir: &str, level_num: u8, timezone_str: &str) -> LoggingSystem {
     let level_atomic = Arc::new(AtomicU8::new(level_num));
+    let timer = LocalTimer { offset: parse_timezone(timezone_str) };
     
     // Terminal output
     let stdout_layer = fmt::layer()
+        .with_timer(timer)
         .with_target(false)
         .with_filter(DynamicLevelFilter { current_level: level_atomic.clone() });
     
@@ -74,6 +108,7 @@ pub fn init_logging(log_dir: &str, level_num: u8) -> LoggingSystem {
     let guard_holder = Arc::new(Mutex::new(guard));
 
     let file_layer = fmt::layer()
+        .with_timer(timer)
         .with_writer(swap_writer.clone())
         .with_ansi(false)
         .with_target(true)

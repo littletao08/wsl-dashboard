@@ -4,6 +4,7 @@ import { Theme, AppI18n } from "../../theme.slint";
 export component ConfirmationDialog inherits Rectangle {
     in property <string> title_text: AppI18n.t("dialog.delete_title", [AppI18n.version]);
     in property <string> message;
+    in property <length> dialog_height: 160px;
     callback confirm;
     callback cancel;
     
@@ -16,7 +17,7 @@ export component ConfirmationDialog inherits Rectangle {
     // Dialog Box
     Rectangle {
         width: 400px;
-        height: 160px;
+        height: root.dialog_height;
         background: Theme.card_bg;
         border-radius: 8px;
         border-width: 1px;
@@ -28,7 +29,7 @@ export component ConfirmationDialog inherits Rectangle {
             Text {
                 text: root.title_text;
                 font-size: 18px;
-                font-weight: 600;
+                font-weight: 500;
                 color: Theme.text_primary;
             }
 

@@ -37,9 +37,10 @@ async fn main() {
     
     let initial_logs_location = settings.logs_location.clone();
     let log_level = settings.log_level;
+    let timezone = config_manager.get_config().system.timezone.clone();
 
     // Set up tracing logs
-    let logging_system = utils::logging::init_logging(&initial_logs_location, log_level);
+    let logging_system = utils::logging::init_logging(&initial_logs_location, log_level, &timezone);
 
     // Cleanup expired logs
     cleanup_expired_logs(&initial_logs_location, settings.log_days);

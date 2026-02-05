@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "WSL Dashboard"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "Verschieben"
 move_success = "Instanz '{0}' erfolgreich verschoben nach:\n{1}"
 move_failed = "Verschieben fehlgeschlagen: {0}"
 move_failed_backup = "Verschieben fehlgeschlagen (Backup gespeichert):\nDie Distribution wurde abgemeldet, aber die Verschiebungslogik schlug fehl.\nDie Backup-Datei befindet sich unter: {0}\nSie können diese Datei manuell importieren, um sie wiederherzustellen."
+move_wsl2_shutdown_warning = "Das Verschieben einer WSL2-Distribution erfordert das Beenden aller laufenden WSL-Instanzen, um Dateideskriptoren freizugeben.\n\nDie folgenden Distributionen werden gestoppt: {0}\n\nBitte klicken Sie auf Bestätigen, um fortzufahren."
+move_wsl2_shutdown_warning_no_running = "Das Verschieben einer WSL2-Distribution erfordert die Ausführung von wsl --shutdown, um sicherzustellen, dass Dateideskriptoren vollständig freigegeben werden.\n\nBitte klicken Sie auf Bestätigen, um fortzufahren."
 select_move_dir = "Verschiebungsinstallationsverzeichnis auswählen"
 operation_in_progress = "Ein Vorgang (Exportieren, Verschieben oder Klonen) ist bereits im Gange. Bitte warten Sie, bis er abgeschlossen ist."
 archive = "Archiv"
@@ -141,9 +143,16 @@ update_failed = "Update-Prüfung fehlgeschlagen: {0}"
 starting = "Starten..."
 stopping = "Stoppen..."
 restarting = "Neu starten..."
+deleting = "Löschen ..."
 exporting = "Exportieren..."
+exporting_msg = "{0} wird exportiert, Datei: {1}"
 cloning = "Klonen..."
+cloning_step1 = "{0} wird geklont: (1/2) Exportieren, Datei: {1}"
+cloning_step2 = "{0} wird geklont: (2/2) Importieren"
 moving = "Verschieben..."
+moving_wsl2_msg = "{0} wird verschoben, Dateigröße: {1}"
+moving_wsl1_step1 = "{0} wird verschoben: (1/2) Exportieren, Datei: {1}"
+moving_wsl1_step2 = "{0} wird verschoben: (2/2) Importieren"
 fetching_distros = "Distributionen werden abgerufen..."
 fetching_info = "Informationen werden abgerufen..."
 

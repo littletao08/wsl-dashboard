@@ -161,13 +161,13 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
              let _ = slint::spawn_local(async move {
                  if let Some(app) = ah_inner.upgrade() {
                      if app.get_installable_distro_names().row_count() == 0 {
-                        app.set_operation_text(i18n::t("operation.fetching_distros").into());
-                        app.set_show_operation(true);
+                        app.set_task_status_text(i18n::t("operation.fetching_distros").into());
+                        app.set_task_status_visible(true);
 
                         refresh_installable_distros(ah_inner.clone(), as_ptr).await;
 
                         if let Some(app) = ah_inner.upgrade() {
-                            app.set_show_operation(false);
+                            app.set_task_status_visible(false);
                         }
                      } else {
                         if let Some(first) = app.get_installable_distro_names().row_data(0) {
@@ -291,8 +291,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                     info!("Starting store installation for distribution ID: {}", real_id);
                     
                     let _ = {
-                        let state = as_ptr.lock().await;
-                        executor.delete_distro(&state.config_manager, &real_id).await
+                        let config_manager = {
+                            let state = as_ptr.lock().await;
+                            state.config_manager.clone()
+                        };
+                        executor.delete_distro(&config_manager, &real_id).await
                     };
                     
                     let mut current = app.get_terminal_output().to_string();
@@ -397,8 +400,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                                 executor.execute_command(&["--unregister", &real_id]).await;
                                 
                                 let final_path = if target_path.is_empty() {
-                                    let state = as_ptr.lock().await;
-                                    let base = PathBuf::from(&state.config_manager.get_settings().distro_location);
+                                    let distro_location = {
+                                        let state = as_ptr.lock().await;
+                                        state.config_manager.get_settings().distro_location.clone()
+                                    };
+                                    let base = PathBuf::from(&distro_location);
                                     base.join(&final_name).to_string_lossy().to_string()
                                 } else {
                                     target_path
@@ -450,8 +456,11 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                         
                         let mut target_path = install_path.clone();
                         if target_path.is_empty() {
-                            let state = as_ptr.lock().await;
-                            let base = PathBuf::from(&state.config_manager.get_settings().distro_location);
+                            let distro_location = {
+                                let state = as_ptr.lock().await;
+                                state.config_manager.get_settings().distro_location.clone()
+                            };
+                            let base = PathBuf::from(&distro_location);
                             target_path = base.join(&final_name).to_string_lossy().to_string();
                         }
                         if let Err(e) = std::fs::create_dir_all(&target_path) {

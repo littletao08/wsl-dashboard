@@ -1,4 +1,4 @@
-﻿[common]
+[common]
 app_name = "Tableau de bord WSL"
 
 [sidebar]
@@ -113,6 +113,8 @@ move_confirm = "Déplacer"
 move_success = "Instance '{0}' déplacée avec succès vers :\n{1}"
 move_failed = "Échec du déplacement : {0}"
 move_failed_backup = "Échec du déplacement (Sauvegarde effectuée) :\nLa distribution a été désenregistrée, mais la logique de déplacement a échoué.\nLe fichier de sauvegarde est situé à : {0}\nVous pouvez importer manuellement ce fichier pour récupérer."
+move_wsl2_shutdown_warning = "Déplacer une distribution WSL2 nécessite l'arrêt de toutes les instances WSL en cours d'exécution pour libérer les descripteurs de fichiers.\n\nLes distributions suivantes seront arrêtées : {0}\n\nVeuillez cliquer sur Confirmer pour continuer."
+move_wsl2_shutdown_warning_no_running = "Déplacer une distribution WSL2 nécessite l'exécution de wsl --shutdown pour s'assurer que les descripteurs de fichiers sont entièrement libérés.\n\nVeuillez cliquer sur Confirmer pour continuer."
 select_move_dir = "Sélectionner le répertoire de déplacement"
 operation_in_progress = "Une opération (Exportation, Déplacement ou Clonage) est déjà en cours. Veuillez attendre qu'elle se termine."
 archive = "Archive"
@@ -141,9 +143,16 @@ update_failed = "Échec de la vérification de la mise à jour : {0}"
 starting = "Démarrage..."
 stopping = "Arrêt..."
 restarting = "Redémarrage..."
+deleting = "Suppression en cours ..."
 exporting = "Exportation..."
+exporting_msg = "Exportation de {0} en cours, fichier : {1}"
 cloning = "Clonage..."
+cloning_step1 = "Clonage de {0} : (1/2) Exportation, fichier : {1}"
+cloning_step2 = "Clonage de {0} : (2/2) Importation"
 moving = "Déplacement en cours..."
+moving_wsl2_msg = "Déplacement de {0} en cours, taille du fichier : {1}"
+moving_wsl1_step1 = "Déplacement de {0} : (1/2) Exportation, fichier : {1}"
+moving_wsl1_step2 = "Déplacement de {0} : (2/2) Importation"
 fetching_distros = "Récupération des distributions..."
 fetching_info = "Récupération des informations..."
 

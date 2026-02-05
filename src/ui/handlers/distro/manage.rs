@@ -176,8 +176,8 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         let name = name.to_string();
         let _ = slint::spawn_local(async move {
             if let Some(app) = ah.upgrade() {
-                app.set_operation_text(i18n::t("operation.fetching_info").into());
-                app.set_show_operation(true);
+                app.set_task_status_text(i18n::t("operation.fetching_info").into());
+                app.set_task_status_visible(true);
             }
             let result = {
                 let app_state = as_ptr.lock().await;
@@ -186,7 +186,7 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                 executor.get_distro_information(&name).await
             };
             if let Some(app) = ah.upgrade() {
-                app.set_show_operation(false);
+                app.set_task_status_visible(false);
                 if result.success {
                     if let Some(data) = result.data {
                         let mut slint_data = app.get_information();

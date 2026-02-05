@@ -8,7 +8,6 @@ import {
     StoreInstallWarnDialog,
     InformationDialog,
     SettingsDialog,
-    OperationOverlay,
     RootFSHelpDialog,
     VSCodeStartupDialog,
 } from "dialogs.slint";
@@ -20,11 +19,11 @@ export component ModalManager inherits Rectangle {
     in property <bool> show_export: false;
     in property <bool> show_clone: false;
     in property <bool> show_move: false;
+    in property <bool> show_move_confirm: false;
     in property <bool> show_message: false;
     in property <bool> show_update: false;
     in property <bool> show_install_warn: false;
     in property <bool> show_expire: false;
-    in property <bool> show_operation: false;
     in property <bool> show_information: false;
     in-out property <bool> show_settings: false;
     in property <bool> show_rootfs_help: false;
@@ -44,10 +43,10 @@ export component ModalManager inherits Rectangle {
     in-out property <string> move_target_name;
     in-out property <string> move_target_path;
     in property <string> move_error: "";
+    in property <string> move_confirm_message: "";
     in property <string> message_text;
     in property <string> message_link_text: "";
     in property <string> message_action_text: "";
-    in property <string> operation_text: "Processing...";
     in property <string> settings_target_name: "";
     in-out property <string> settings_terminal_dir: "~";
     in-out property <string> settings_vscode_dir: "/home";
@@ -74,6 +73,8 @@ export component ModalManager inherits Rectangle {
     callback confirm_move(string);
     callback cancel_move();
     callback browse_move();
+    callback confirm_move_action();
+    callback cancel_move_confirm();
     callback close_message();
     callback message_link_clicked();
     callback message_action_clicked();
@@ -83,7 +84,6 @@ export component ModalManager inherits Rectangle {
     callback confirm_install_warn();
     callback cancel_install_warn();
     callback close_expire();
-    callback close_operation();
     callback close_information();
     callback confirm_settings(string, string, string, bool, bool, string);
     callback close_settings();
@@ -93,6 +93,7 @@ export component ModalManager inherits Rectangle {
     if (show_delete): ConfirmationDialog {
         width: 100%;
         height: 100%;
+        dialog_height: 160px;
         title_text: AppI18n.t("dialog.delete_title", [AppI18n.version]);
         message: AppI18n.t("dialog.delete_msg", [delete_target_name, AppI18n.version]);
         confirm => {
@@ -157,6 +158,19 @@ export component ModalManager inherits Rectangle {
             root.confirm_move(path);
         }
     }
+    if (show_move_confirm): ConfirmationDialog {
+        width: 100%;
+        height: 100%;
+        dialog_height: 250px;
+        title_text: AppI18n.t("dialog.move_title", []);
+        message: root.move_confirm_message;
+        confirm => {
+            root.confirm_move_action();
+        }
+        cancel => {
+            root.cancel_move_confirm();
+        }
+    }
     if (show_message): Rectangle {
         width: 100%;
         height: 100%;
@@ -212,14 +226,6 @@ export component ModalManager inherits Rectangle {
         }
         close => {
             root.close_expire();
-        }
-    }
-    if (show_operation): OperationOverlay {
-        width: 100%;
-        height: 100%;
-        message: operation_text;
-        clicked => {
-            root.close_operation();
         }
     }
     if (show_information): InformationDialog {
