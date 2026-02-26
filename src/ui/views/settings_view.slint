@@ -1,4 +1,9 @@
-import { Theme, AppI18n } from "../theme.slint";
+import {
+    Theme,
+    AppI18n,
+    SettingsStrings,
+    LayoutConstants,
+} from "../theme.slint";
 import { CustomScrollbar } from "../components/scrollbar.slint";
 import {
     CustomLineEdit,
@@ -11,11 +16,15 @@ export component SettingsView inherits Rectangle {
     in-out property <string> ui_language: "auto";
     in-out property <string> distro_location: "";
     in-out property <string> logs_location: "";
-    in-out property <int> log_level: 3;
+    in-out property <int> log_level: 4;
     in-out property <int> log_days: 7;
     in-out property <int> check_update_interval: 7;
     in-out property <bool> auto_shutdown: false;
-    private property <bool> open-dropdown: combo-lang.open-dropdown || combo-log.open-dropdown || combo-log-retention.open-dropdown || combo-update.open-dropdown;
+    in-out property <bool> tray_autostart: false;
+    in-out property <bool> tray_start_minimized: false;
+    in-out property <bool> tray_close_to_tray: true;
+    in property <SettingsStrings> strings;
+    private property <bool> open-dropdown: combo-lang.open-dropdown || combo-update.open-dropdown || combo-log.open-dropdown || combo-log-retention.open-dropdown;
 
     // Language support configuration
     private property <[string]> language-options: [
@@ -23,17 +32,32 @@ export component SettingsView inherits Rectangle {
         AppI18n.t("settings.languages.en", [AppI18n.version]),
         AppI18n.t("settings.languages.zh_cn", [AppI18n.version]),
         AppI18n.t("settings.languages.zh_tw", [AppI18n.version]),
-        AppI18n.t("settings.languages.fr", [AppI18n.version]),
+        AppI18n.t("settings.languages.hi", [AppI18n.version]),
         AppI18n.t("settings.languages.es", [AppI18n.version]),
-        AppI18n.t("settings.languages.ru", [AppI18n.version]),
+        AppI18n.t("settings.languages.fr", [AppI18n.version]),
+        AppI18n.t("settings.languages.ar", [AppI18n.version]),
+        AppI18n.t("settings.languages.bn", [AppI18n.version]),
         AppI18n.t("settings.languages.pt", [AppI18n.version]),
+        AppI18n.t("settings.languages.ru", [AppI18n.version]),
+        AppI18n.t("settings.languages.ur", [AppI18n.version]),
+        AppI18n.t("settings.languages.id", [AppI18n.version]),
         AppI18n.t("settings.languages.de", [AppI18n.version]),
         AppI18n.t("settings.languages.ja", [AppI18n.version]),
-        AppI18n.t("settings.languages.hi", [AppI18n.version]),
-        AppI18n.t("settings.languages.bn", [AppI18n.version]),
-        AppI18n.t("settings.languages.id", [AppI18n.version]),
+        AppI18n.t("settings.languages.tr", [AppI18n.version]),
+        AppI18n.t("settings.languages.ko", [AppI18n.version]),
         AppI18n.t("settings.languages.it", [AppI18n.version]),
-        AppI18n.t("settings.languages.tr", [AppI18n.version])
+        AppI18n.t("settings.languages.nl", [AppI18n.version]),
+        AppI18n.t("settings.languages.sv", [AppI18n.version]),
+        AppI18n.t("settings.languages.cs", [AppI18n.version]),
+        AppI18n.t("settings.languages.el", [AppI18n.version]),
+        AppI18n.t("settings.languages.hu", [AppI18n.version]),
+        AppI18n.t("settings.languages.he", [AppI18n.version]),
+        AppI18n.t("settings.languages.no", [AppI18n.version]),
+        AppI18n.t("settings.languages.da", [AppI18n.version]),
+        AppI18n.t("settings.languages.fi", [AppI18n.version]),
+        AppI18n.t("settings.languages.sk", [AppI18n.version]),
+        AppI18n.t("settings.languages.sl", [AppI18n.version]),
+        AppI18n.t("settings.languages.is", [AppI18n.version])
     ];
     private property <[string]> log-level-options: [
         AppI18n.t("settings.log_levels.error", [AppI18n.version]),
@@ -53,39 +77,9 @@ export component SettingsView inherits Rectangle {
         AppI18n.t("settings.update_options.biweekly", [AppI18n.version]),
         AppI18n.t("settings.update_options.monthly", [AppI18n.version])
     ];
-       
-    // Calculate selected index based on check_update_interval
-    pure function get-check-update-index(days: int) -> int {
-        if (days == 1) {
-            return 0;
-        }
-        if (days == 7) {
-            return 1;
-        }
-        if (days == 15) {
-            return 2;
-        }
-        if (days == 30) {
-            return 3;
-        }
-        return 1;
-    }
-
-    // Calculate selected index based on log_days
-    pure function get-log-days-index(days: int) -> int {
-        if (days == 7) {
-            return 0;
-        }
-        if (days == 15) {
-            return 1;
-        }
-        if (days == 30) {
-            return 2;
-        }
-        return 0;
-    }
-    
-    // Calculate selected index based on ui_language
+    property <int> selected-language-index: get-language-index(ui_language);
+    property <int> selected-log-level-index: get-log-level-index(log_level);
+    property <int> selected-check-update-index: get-check-update-index(check_update_interval);
     pure function get-language-index(lang: string) -> int {
         if (lang == "en") {
             return 1;
@@ -96,57 +90,128 @@ export component SettingsView inherits Rectangle {
         if (lang == "zh-TW") {
             return 3;
         }
-        if (lang == "fr") {
+        if (lang == "hi") {
             return 4;
         }
         if (lang == "es") {
             return 5;
         }
-        if (lang == "ru") {
+        if (lang == "fr") {
             return 6;
         }
-        if (lang == "pt") {
+        if (lang == "ar") {
             return 7;
         }
-        if (lang == "de") {
+        if (lang == "bn") {
             return 8;
         }
-        if (lang == "ja") {
+        if (lang == "pt") {
             return 9;
         }
-        if (lang == "hi") {
+        if (lang == "ru") {
             return 10;
         }
-        if (lang == "bn") {
+        if (lang == "ur") {
             return 11;
         }
         if (lang == "id") {
             return 12;
         }
-        if (lang == "it") {
+        if (lang == "de") {
             return 13;
         }
-        if (lang == "tr") {
+        if (lang == "ja") {
             return 14;
+        }
+        if (lang == "tr") {
+            return 15;
+        }
+        if (lang == "ko") {
+            return 16;
+        }
+        if (lang == "it") {
+            return 17;
+        }
+        if (lang == "nl") {
+            return 18;
+        }
+        if (lang == "sv") {
+            return 19;
+        }
+        if (lang == "cs") {
+            return 20;
+        }
+        if (lang == "el") {
+            return 21;
+        }
+        if (lang == "hu") {
+            return 22;
+        }
+        if (lang == "he") {
+            return 23;
+        }
+        if (lang == "no") {
+            return 24;
+        }
+        if (lang == "da") {
+            return 25;
+        }
+        if (lang == "fi") {
+            return 26;
+        }
+        if (lang == "sk") {
+            return 27;
+        }
+        if (lang == "sl") {
+            return 28;
+        }
+        if (lang == "is") {
+            return 29;
+        }
+        return 0; // auto
+    }
+    pure function get-log-level-index(level: int) -> int {
+        if (level >= 1 && level <= 5) {
+            return level - 1;
+        }
+        return 2;
+    }
+    pure function get-check-update-index(interval: int) -> int {
+        if (interval == 1) {
+            return 0;
+        }
+        if (interval == 7) {
+            return 1;
+        }
+        if (interval == 15) {
+            return 2;
+        }
+        if (interval == 30) {
+            return 3;
+        }
+        return 1;
+    }
+    pure function get-log-days-index(days: int) -> int {
+        if (days == 30) {
+            return 2;
+        }
+        if (days == 15) {
+            return 1;
         }
         return 0;
     }
-    
-    // Intermediate mutable property for ComboBox
-    property <int> selected-language-index: get-language-index(ui_language);
-    property <int> selected-check-update-index: get-check-update-index(check_update_interval);
     callback save-settings();
     callback select-distro-folder();
     callback select-logs-folder();
-    background: transparent;
     VerticalLayout {
-        spacing: 0;
-        
-        // Configuration form area (with scroll)
-        content-wrapper := Rectangle {
+        padding: 0px;
+        spacing: 0px;
+
+        // Content Area
+        Rectangle {
             vertical-stretch: 1;
             background: transparent;
-            z: 1; // Ensure this and its children stay above the Save button area
+            z: 1;
             clip: true;
             flickable := Flickable {
                 viewport-height: content-layout.preferred-height;
@@ -154,11 +219,11 @@ export component SettingsView inherits Rectangle {
                 height: 100%;
                 interactive: !root.open-dropdown;
                 content-layout := VerticalLayout {
-                    padding-left: 4px;
-                    padding-right: 16px;
+                    padding-left: AppI18n.is-rtl ? 16px : 4px;
+                    padding-right: AppI18n.is-rtl ? 4px : 16px;
                     padding-top: 4px;
-                    padding-bottom: 4px; // Minimal padding
-                    spacing: 10px; // Reduced as we flattened layout
+                    padding-bottom: 4px;
+                    spacing: 10px;
                     alignment: start;
 
                     // 1. Software language and Update check
@@ -175,9 +240,11 @@ export component SettingsView inherits Rectangle {
                                     min-width: 0;
                                     spacing: 10px;
                                     Text {
-                                        text: AppI18n.t("settings.language", [AppI18n.version]);
-                                        font-size: 13px;
+                                        text: root.strings.language;
+                                        font-size: 13px * LayoutConstants.font-scale;
+                                        font-family: Theme.default_font;
                                         color: Theme.text_secondary;
+                                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                                     }
 
                                     combo-lang := CustomComboBox {
@@ -192,27 +259,57 @@ export component SettingsView inherits Rectangle {
                                             } else if (idx == 3) {
                                                 root.ui_language = "zh-TW";
                                             } else if (idx == 4) {
-                                                root.ui_language = "fr";
+                                                root.ui_language = "hi";
                                             } else if (idx == 5) {
                                                 root.ui_language = "es";
                                             } else if (idx == 6) {
-                                                root.ui_language = "ru";
+                                                root.ui_language = "fr";
                                             } else if (idx == 7) {
-                                                root.ui_language = "pt";
+                                                root.ui_language = "ar";
                                             } else if (idx == 8) {
-                                                root.ui_language = "de";
-                                            } else if (idx == 9) {
-                                                root.ui_language = "ja";
-                                            } else if (idx == 10) {
-                                                root.ui_language = "hi";
-                                            } else if (idx == 11) {
                                                 root.ui_language = "bn";
+                                            } else if (idx == 9) {
+                                                root.ui_language = "pt";
+                                            } else if (idx == 10) {
+                                                root.ui_language = "ru";
+                                            } else if (idx == 11) {
+                                                root.ui_language = "ur";
                                             } else if (idx == 12) {
                                                 root.ui_language = "id";
                                             } else if (idx == 13) {
-                                                root.ui_language = "it";
+                                                root.ui_language = "de";
                                             } else if (idx == 14) {
+                                                root.ui_language = "ja";
+                                            } else if (idx == 15) {
                                                 root.ui_language = "tr";
+                                            } else if (idx == 16) {
+                                                root.ui_language = "ko";
+                                            } else if (idx == 17) {
+                                                root.ui_language = "it";
+                                            } else if (idx == 18) {
+                                                root.ui_language = "nl";
+                                            } else if (idx == 19) {
+                                                root.ui_language = "sv";
+                                            } else if (idx == 20) {
+                                                root.ui_language = "cs";
+                                            } else if (idx == 21) {
+                                                root.ui_language = "el";
+                                            } else if (idx == 22) {
+                                                root.ui_language = "hu";
+                                            } else if (idx == 23) {
+                                                root.ui_language = "he";
+                                            } else if (idx == 24) {
+                                                root.ui_language = "no";
+                                            } else if (idx == 25) {
+                                                root.ui_language = "da";
+                                            } else if (idx == 26) {
+                                                root.ui_language = "fi";
+                                            } else if (idx == 27) {
+                                                root.ui_language = "sk";
+                                            } else if (idx == 28) {
+                                                root.ui_language = "sl";
+                                            } else if (idx == 29) {
+                                                root.ui_language = "is";
                                             } else {
                                                 root.ui_language = "auto";
                                             }
@@ -227,9 +324,11 @@ export component SettingsView inherits Rectangle {
                                     min-width: 0;
                                     spacing: 10px;
                                     Text {
-                                        text: AppI18n.t("settings.update_interval", [AppI18n.version]);
-                                        font-size: 13px;
+                                        text: root.strings.auto_update;
+                                        font-size: 13px * LayoutConstants.font-scale;
+                                        font-family: Theme.default_font;
                                         color: Theme.text_secondary;
+                                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                                     }
 
                                     combo-update := CustomComboBox {
@@ -256,48 +355,52 @@ export component SettingsView inherits Rectangle {
 
                     Rectangle {
                         height: 7px;
-                    } // Spacer
+                    } 
 
-                    // 2. Log level and Retention days
+                    // 2. Log level and Retention
                     Rectangle {
                         z: 40;
                         height: log-grid.preferred-height;
                         log-grid := GridLayout {
                             spacing: 12px;
                             Row {
-                                // Column 1: Log Level
+                                // Column 1: Log level
                                 VerticalLayout {
                                     horizontal-stretch: 1;
-                                    preferred-width: 0; // Force layout to ignore internal content width
+                                    preferred-width: 0;
                                     min-width: 0;
                                     spacing: 10px;
                                     Text {
-                                        text: AppI18n.t("settings.log_level", [AppI18n.version]);
-                                        font-size: 13px;
+                                        text: root.strings.log_level;
+                                        font-size: 13px * LayoutConstants.font-scale;
+                                        font-family: Theme.default_font;
                                         color: Theme.text_secondary;
+                                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                                     }
 
                                     combo-log := CustomComboBox {
                                         model: root.log-level-options;
-                                        current-index: root.log-level - 1;
+                                        current-index <=> root.selected-log-level-index;
                                         height: 32px;
-                                        dropdown-height: 100px;
+                                        dropdown-height: 130px;
                                         selected(idx) => {
-                                            root.log-level = idx + 1;
+                                            root.log_level = idx + 1;
                                         }
                                     }
                                 }
 
-                                // Column 2: Retention Days
+                                // Column 2: Log retention days
                                 VerticalLayout {
                                     horizontal-stretch: 1;
-                                    preferred-width: 0; // Force layout to ignore internal content width
+                                    preferred-width: 0;
                                     min-width: 0;
                                     spacing: 10px;
                                     Text {
-                                        text: AppI18n.t("settings.log_retention_days", [AppI18n.version]);
-                                        font-size: 13px;
+                                        text: root.strings.log_retention;
+                                        font-size: 13px * LayoutConstants.font-scale;
+                                        font-family: Theme.default_font;
                                         color: Theme.text_secondary;
+                                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                                     }
 
                                     combo-log-retention := CustomComboBox {
@@ -322,26 +425,46 @@ export component SettingsView inherits Rectangle {
 
                     Rectangle {
                         height: 7px;
-                    } // Spacer
+                    } 
 
                     // 3. Log path
                     Text {
-                        text: AppI18n.t("settings.log_path", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.log_path;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: Theme.text_secondary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
+                        width: 100%;
                     }
 
                     HorizontalLayout {
                         spacing: 6px;
-                        CustomLineEdit {
+                        
+                        // LTR: Input left, Button right
+                        if (!AppI18n.is-rtl): CustomLineEdit {
                             text: root.logs_location;
                             enabled: false;
                             horizontal-stretch: 1;
                         }
 
-                        CustomButton {
-                            text: AppI18n.t("settings.select_folder", [AppI18n.version]);
+                        // RTL: Button left, Input right
+                        if (AppI18n.is-rtl): CustomButton {
+                            text: root.strings.select_folder;
                             height: 32px;
+                            width: self.preferred-width; // Ensure button has natural width
+                            clicked => {
+                                root.select-logs-folder();
+                            }
+                        }
+                        if (AppI18n.is-rtl): CustomLineEdit {
+                            text: root.logs_location;
+                            enabled: false;
+                            horizontal-stretch: 1;
+                        }
+                        if (!AppI18n.is-rtl): CustomButton {
+                            text: root.strings.select_folder;
+                            height: 32px;
+                            width: self.preferred-width; // Ensure button has natural width
                             clicked => {
                                 root.select-logs-folder();
                             }
@@ -350,27 +473,46 @@ export component SettingsView inherits Rectangle {
 
                     Rectangle {
                         height: 7px;
-                    } // Spacer
-
+                    } 
 
                     // 5. Default distribution installation directory
                     Text {
-                        text: AppI18n.t("settings.distro_dir", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.install_dir;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: Theme.text_secondary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
+                        width: 100%;
                     }
 
                     HorizontalLayout {
                         spacing: 8px;
-                        CustomLineEdit {
+                        
+                        // LTR: Input left, Button right
+                        if (!AppI18n.is-rtl): CustomLineEdit {
                             text: root.distro_location;
                             enabled: false;
                             horizontal-stretch: 1;
                         }
 
-                        CustomButton {
-                            text: AppI18n.t("settings.select_folder", [AppI18n.version]);
+                        // RTL: Button left, Input right
+                        if (AppI18n.is-rtl): CustomButton {
+                            text: root.strings.select_folder;
                             height: 32px;
+                            width: self.preferred-width; // Ensure button has natural width
+                            clicked => {
+                                root.select-distro-folder();
+                            }
+                        }
+                        if (AppI18n.is-rtl): CustomLineEdit {
+                            text: root.distro_location;
+                            enabled: false;
+                            horizontal-stretch: 1;
+                        }
+                        if (!AppI18n.is-rtl): CustomButton {
+                            text: root.strings.select_folder;
+                            height: 32px;
+                            width: self.preferred-width; // Ensure button has natural width
                             clicked => {
                                 root.select-distro-folder();
                             }
@@ -379,19 +521,34 @@ export component SettingsView inherits Rectangle {
 
                     Rectangle {
                         height: 7px;
-                    } // Spacer
+                    } 
                     
-                    // 6. Automatically close subsystem when exiting
+                    // 6. Automatically close subsystem
                     CustomCheckBox {
                         checked <=> root.auto_shutdown;
-                        text: AppI18n.t("settings.auto_shutdown_msg", [AppI18n.version]);
+                        text: root.strings.auto_close;
+                    }
+
+                    CustomCheckBox {
+                        checked <=> root.tray_autostart;
+                        text: root.strings.auto_start;
+                    }
+
+                    CustomCheckBox {
+                        checked <=> root.tray_start_minimized;
+                        text: root.strings.minimize_tray;
+                    }
+
+                    CustomCheckBox {
+                        checked <=> root.tray_close_to_tray;
+                        text: root.strings.close_to_tray;
                     }
                 }
             }
-            
+
             // Scrollbar
             if (flickable.viewport-height > flickable.height): CustomScrollbar {
-                x: parent.width - 12px;
+                x: AppI18n.is-rtl ? 4px : parent.width - 10px;
                 y: 0;
                 width: 8px;
                 height: 100%;
@@ -407,10 +564,11 @@ export component SettingsView inherits Rectangle {
         HorizontalLayout {
             padding-top: 4px;
             padding-bottom: 4px;
-            padding-right: 16px;
-            alignment: end;
+            padding-right: AppI18n.is-rtl ? 0 : 16px;
+            padding-left: AppI18n.is-rtl ? 16px : 0;
+            alignment: AppI18n.is-rtl ? start : end;
             CustomButton {
-                text: AppI18n.t("settings.save", [AppI18n.version]);
+                text: root.strings.save;
                 primary: true;
                 height: 32px;
                 clicked => {

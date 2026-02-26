@@ -1,7 +1,7 @@
 use tokio::task;
 use tokio::process::Command;
-use tracing::{info, warn, error};
-use serde_json;
+use tracing::{info, warn, error, debug};
+use std::time::Duration;
 use crate::wsl::executor::WslCommandExecutor;
 use crate::wsl::models::WslCommandResult;
 use crate::config::ConfigManager;
@@ -61,112 +61,103 @@ pub async fn delete_distro(executor: &WslCommandExecutor, config_manager: &Confi
     info!("Operation: Delete WSL distribution - {}", distro_name);
     
     // 1. Determine PackageFamilyName and if it's the only instance before unregistering
-    let ps_script = format!(r#"
-        $distro = "{}"
-        $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss"
-        $subkeys = Get-ChildItem $regPath -ErrorAction SilentlyContinue
-        
-        $targetPfn = ""
-        $pfnCounts = @{{}}
-        
-        # First Pass: Identify the target's PFN and all Pfns in use
-        foreach ($subkey in $subkeys) {{
-            $props = Get-ItemProperty $subkey.PSPath -ErrorAction SilentlyContinue
-            $pfn = ""
-            
-            if ($props.PackageFamilyName) {{
-                $pfn = $props.PackageFamilyName.Trim()
-            }} elseif ($props.BasePath -match "LocalState$") {{
-                # Heuristic: Find PFN in BasePath if registry key is missing
-                if ($props.BasePath -match "Packages\\([^\\]+)\\LocalState") {{
-                    $pfn = $matches[1]
-                }}
-            }}
-            
-            if ($pfn) {{
-                $pfnCounts[$pfn] = [int]$pfnCounts[$pfn] + 1
-                if ($props.DistributionName.Trim() -eq $distro) {{
-                    $targetPfn = $pfn
-                }}
-            }}
-        }}
-        
-        $shouldRemove = $false
-        if ($targetPfn -and ($pfnCounts[$targetPfn] -eq 1)) {{
-            $shouldRemove = $true
-        }}
-        
-        @{{ pfn = $targetPfn; should_remove = $shouldRemove }} | ConvertTo-Json
-    "#, distro_name);
-
-    let mut cmd = Command::new("powershell");
-    cmd.args(&["-NoProfile", "-NonInteractive", "-Command", &ps_script]);
-    #[cfg(windows)]
-    {
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-        // Set kill_on_drop so the process is terminated if wait_with_output times out and the future is dropped
-        cmd.kill_on_drop(true);
-    }
-
-    let mut pfn_to_remove = None;
+    // Use native registry access instead of slow PowerShell
+    let all_distros_reg = task::spawn_blocking(|| {
+        crate::utils::registry::get_wsl_distros_from_reg()
+    }).await.unwrap_or_default();
     
-    // Spawn and wait for output with timeout
-    let output_res = tokio::time::timeout(
-        std::time::Duration::from_secs(15), 
-        async {
-            match cmd.spawn() {
-                Ok(child) => child.wait_with_output().await,
-                Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+    let target_distro_info = all_distros_reg.iter().find(|d| d.name == distro_name);
+    
+    let mut pfn_to_remove = None;
+    if let Some(info) = target_distro_info {
+        let pfn = &info.package_family_name;
+        if !pfn.is_empty() {
+            // Count how many distros use this same PFN
+            let pfn_count = all_distros_reg.iter().filter(|d| &d.package_family_name == pfn).count();
+            if pfn_count == 1 {
+                pfn_to_remove = Some(pfn.clone());
+                info!("Distribution '{}' is associated with package '{}' and is the only instance using it.", distro_name, pfn);
+            } else {
+                info!("Distribution '{}' is associated with package '{}', but {} other instances still use this launcher.", distro_name, pfn, pfn_count - 1);
             }
-        }
-    ).await;
-
-    match output_res {
-        Ok(Ok(output)) => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&stdout) {
-                let pfn = parsed["pfn"].as_str().unwrap_or("").to_string();
-                let should_remove = parsed["should_remove"].as_bool().unwrap_or(false);
-                if !pfn.is_empty() && should_remove {
-                    pfn_to_remove = Some(pfn);
-                    info!("Distribution '{}' is associated with package '{}' and is the only instance using it.", distro_name, pfn_to_remove.as_ref().unwrap());
-                } else if !pfn.is_empty() {
-                    info!("Distribution '{}' is associated with package '{}', but other instances still use this launcher.", distro_name, pfn);
-                }
-            }
-        }
-        Ok(Err(e)) => {
-            warn!("Failed to get output from PowerShell PFN detection: {}", e);
-        }
-        Err(_) => {
-            warn!("PowerShell PFN detection timed out after 15s (process killed by kill_on_drop)");
         }
     }
 
-    // 2. Extra Cleanups: config file and autostart vbs
+    // 2. Extra Cleanups: config file and autostart vbs (Parallelized to reduce I/O wait)
     info!("Cleaning up configurations for '{}' before unregistering", distro_name);
     
-    // a. Remove from instances.toml (Use spawn_blocking for sync config management)
     let cm = config_manager.clone();
-    let dn = distro_name.to_string();
-    let removal_res = task::spawn_blocking(move || {
-        cm.remove_instance_config(&dn).map_err(|e| e.to_string())
-    }).await;
+    let dn1 = distro_name.to_string();
+    let dn2 = distro_name.to_string();
 
-    if let Err(e) = removal_res {
-        warn!("Task join error during instance config removal: {}", e);
-    } else if let Ok(Err(e)) = removal_res {
-        warn!("Failed to remove instance config for '{}': {}", distro_name, e);
+    debug!("Starting parallel cleanup tasks for '{}' with 15s timeout...", distro_name);
+    let cleanup_future = async {
+        tokio::join!(
+            // a. Remove from instances.toml
+            async {
+                debug!("Removing instance config for '{}'...", distro_name);
+                let res = task::spawn_blocking(move || {
+                    cm.remove_instance_config(&dn1).map_err(|e| e.to_string())
+                }).await;
+                debug!("Instance config removal for '{}' complete", distro_name);
+                res
+            },
+            // b. Remove from wsl-dashboard.vbs
+            async {
+                debug!("Updating VBS autostart for '{}' (Removing entries)...", distro_name);
+                let res = update_windows_autostart(&dn2, false).await;
+                debug!("VBS autostart update for '{}' complete", distro_name);
+                res
+            }
+        )
+    };
+
+    let cleanup_result = tokio::time::timeout(Duration::from_secs(15), cleanup_future).await;
+    
+    if cleanup_result.is_err() {
+        warn!("Parallel cleanup tasks for '{}' timed out after 15s. Proceeding with unregistration anyway.", distro_name);
+    }
+    
+    debug!("Finished parallel cleanup tasks attempt for '{}'", distro_name);
+    {
+        use tokio::task::JoinError;
+        let (config_res, autostart_res): (Result<Result<(), String>, JoinError>, Result<(), Box<dyn std::error::Error + Send + Sync>>) = cleanup_result.unwrap_or((
+            Ok(Ok(())), // Mock success to continue
+            Ok(())
+        ));
+
+        match config_res {
+            Ok(Err(e)) => warn!("Failed to remove instance config for '{}': {}", distro_name, e),
+            Err(e) => warn!("Task join error during instance config removal: {}", e),
+            _ => {}
+        }
+
+        if let Err(e) = autostart_res {
+            warn!("Failed to remove autostart line for '{}' from VBS: {}", distro_name, e);
+        }
     }
 
-    // b. Remove from wsl-dashboard.vbs
-    if let Err(e) = update_windows_autostart(distro_name, false).await {
-        warn!("Failed to remove autostart line for '{}' from VBS: {}", distro_name, e);
-    }
+    // 3. Pre-termination to prevent unregister hangs
+    debug!("Terminating '{}' before unregistration to avoid hangs (10s timeout)...", distro_name);
+    let _ = tokio::time::timeout(
+        Duration::from_secs(10),
+        executor.execute_command(&["--terminate", distro_name])
+    ).await;
 
-    // 3. Perform wsl --unregister
-    let result = executor.execute_command(&["--unregister", distro_name]).await;
+    // 4. Perform wsl --unregister with specific timeout to avoid permanent hanging
+    debug!("Executing WSL command: wsl --unregister {} (20s timeout)...", distro_name);
+    let result = match tokio::time::timeout(
+        Duration::from_secs(20),
+        executor.execute_command(&["--unregister", distro_name])
+    ).await {
+        Ok(res) => res,
+        Err(_) => {
+            let err = format!("WSL unregister timed out for '{}' after 20s", distro_name);
+            warn!("{}", err);
+            // We return success: false to signal failure
+            WslCommandResult::error(String::new(), err)
+        }
+    };
     
     if !result.success {
         warn!("Failed to unregister WSL distro '{}': {:?}", distro_name, result.error);
@@ -179,7 +170,10 @@ pub async fn delete_distro(executor: &WslCommandExecutor, config_manager: &Confi
     if let Some(pfn) = pfn_to_remove {
         info!("Initiating launcher cleanup for PackageFamilyName: {} (Background)", pfn);
         
+        let bg_sem = executor.background_semaphore().clone();
         tokio::spawn(async move {
+            let _permit = bg_sem.acquire().await;
+            debug!("Launcher cleanup permit acquired for '{}'", pfn);
             let uninstall_script = format!(r#"
                 $pfn = "{}"
                 # Faster search by splitting PFN and using Name wildcard

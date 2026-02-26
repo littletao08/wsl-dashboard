@@ -1,4 +1,4 @@
-import { Theme, AppI18n } from "../../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../../theme.slint";
 
 export component VSCodeStartupDialog inherits Rectangle {
     callback close;
@@ -41,7 +41,8 @@ export component VSCodeStartupDialog inherits Rectangle {
             Text {
                 text: AppI18n.t("dialog.vscode_starting", [AppI18n.version]) + "...";
                 color: Theme.text_primary;
-                font-size: 15px;
+                font-size: 15px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 font-weight: 500;
                 horizontal-alignment: center;
             }

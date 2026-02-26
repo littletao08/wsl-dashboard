@@ -57,6 +57,9 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
         ah.set_export_error("".into());
         ah.set_show_export_dialog(false);
         
+        // Synchronously set exporting status to prevent double-click entry
+        ah.set_is_exporting(true);
+        
         let ah_clone = ah.as_weak();
         let as_ptr = as_ptr.clone();
         let distro_source = distro_source.to_string();
@@ -66,7 +69,6 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
             // Show exporting indicator using TaskStatusToast
             let stop_signal = Arc::new(std::sync::atomic::AtomicBool::new(false));
             if let Some(app) = ah_clone.upgrade() {
-                app.set_is_exporting(true);
                 let initial_msg = i18n::tr("operation.exporting_msg", &[distro_source.clone(), "0 MB".to_string()]);
                 app.set_task_status_text(initial_msg.into());
                 app.set_task_status_visible(true);
@@ -93,6 +95,8 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                 stop_signal.clone()
             );
 
+            // Yield to event loop before long-running export
+            tokio::task::yield_now().await;
             let result = {
                 let dashboard = {
                     let state = as_ptr.lock().await;

@@ -1,49 +1,70 @@
-import { Theme, Information, AppI18n } from "../../theme.slint";
+import {
+    Theme,
+    Information,
+    AppI18n,
+    LayoutConstants,
+} from "../../theme.slint";
 
-component InfoRow inherits HorizontalLayout {
+component InfoRow inherits Rectangle {
     in property <string> label;
     in property <string> value;
     in property <color> value_color: Theme.text_primary;
     in property <bool> clickable: false;
+    in property <bool> is_pill: false;
     callback clicked;
-    spacing: 12px;
-    alignment: start;
+    height: 24px;
     Text {
-        text: root.label;
-        width: 100px;
+        x: AppI18n.is-rtl ? parent.width - self.width : 0;
+        text: root.label + ":" + (AppI18n.is-rtl ? "\u{200F}" : "");
+        width: 110px;
         color: Theme.text_secondary;
-        font-size: 13px;
+        font-size: 13px * LayoutConstants.font-scale;
+        font-family: Theme.default_font;
         vertical-alignment: center;
+        horizontal-alignment: AppI18n.is-rtl ? right : left;
     }
 
-    if (root.clickable): touch_area := TouchArea {
-        mouse-cursor: pointer;
+    if (!is_pill): touch_area := TouchArea {
+        x: AppI18n.is-rtl ? 0 : 122px;
+        width: parent.width - 122px;
+        mouse-cursor: root.clickable ? pointer : default;
         clicked => {
-            root.clicked();
+            if (root.clickable) {
+                root.clicked();
+            }
         }
-        horizontal-stretch: 1;
         Rectangle {
-            background: touch_area.has-hover ? (Theme.dark_mode ? #2D2D30 : #F0F0F0) : transparent;
+            background: (root.clickable && touch_area.has-hover) ? (Theme.dark_mode ? #2D2D30 : #F0F0F0) : transparent;
             border-radius: 4px;
             Text {
                 text: root.value;
-                color: touch_area.has-hover ? Theme.accent : root.value_color;
-                font-size: 13px;
+                color: (root.clickable && touch_area.has-hover) ? Theme.accent : root.value_color;
+                font-size: 13px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 font-weight: 500;
                 vertical-alignment: center;
+                horizontal-alignment: AppI18n.is-rtl ? left : left; // Keep values left-aligned for consistency
                 overflow: elide;
                 width: 100%;
             }
         }
     }
-    if (!root.clickable): Text {
-        text: root.value;
-        color: root.value_color;
-        font-size: 13px;
-        font-weight: 500;
-        vertical-alignment: center;
-        overflow: elide;
-        horizontal-stretch: 1;
+    if (is_pill): Rectangle {
+        x: AppI18n.is-rtl ? 0 : 122px;
+        width: pill_text.width + 16px;
+        height: 20px;
+        y: (parent.height - self.height) / 2;
+        background: Theme.dark_mode ? #1E1E1E : #F3F3F3;
+        border-radius: 4px;
+        pill_text := Text {
+            text: root.value;
+            color: Theme.accent;
+            font-family: Theme.default_font;
+            font-size: 12px * LayoutConstants.font-scale;
+            font-weight: 500;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
     }
 }
 
@@ -65,7 +86,7 @@ export component InformationDialog inherits Rectangle {
     // Dialog Box
     Rectangle {
         width: 440px;
-        height: 260px;
+        height: 285px;
         background: Theme.card_bg;
         border-radius: 8px;
         border-width: 1px;
@@ -74,19 +95,25 @@ export component InformationDialog inherits Rectangle {
 
         VerticalLayout {
             padding: 24px;
-            spacing: 12px; // Reduced spacing slightly
+            spacing: 12px;
             
             // Header
-            HorizontalLayout {
-                alignment: space-between;
+            Rectangle {
+                height: 24px;
                 Text {
+                    x: AppI18n.is-rtl ? 32px : 0;
+                    width: parent.width - 32px;
                     text: AppI18n.t("dialog.info_title", [root.info.distro_name, AppI18n.version]);
-                    font-size: 18px;
+                    font-size: 18px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                     font-weight: 500;
                     color: Theme.text_primary;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
+                    vertical-alignment: center;
                 }
 
                 TouchArea {
+                    x: AppI18n.is-rtl ? 0 : parent.width - self.width;
                     width: 24px;
                     height: 24px;
                     clicked => {
@@ -114,7 +141,7 @@ export component InformationDialog inherits Rectangle {
 
             // Content
             VerticalLayout {
-                spacing: 10px;
+                spacing: 8px;
                 alignment: start;
                 InfoRow {
                     label: AppI18n.t("dialog.wsl_version", [AppI18n.version]);
@@ -127,70 +154,16 @@ export component InformationDialog inherits Rectangle {
                     value_color: root.info.status == "Running" ? #28a745 : Theme.text_primary;
                 }
 
-                // Internal Usage (Pill style)
-                HorizontalLayout {
-                    spacing: 12px;
-                    alignment: start;
-                    Text {
-                        text: AppI18n.t("dialog.internal_usage", [AppI18n.version]);
-                        width: 100px;
-                        color: Theme.text_secondary;
-                        font-size: 13px;
-                        vertical-alignment: center;
-                    }
-
-                    Rectangle {
-                        background: Theme.dark_mode ? #1E1E1E : #F3F3F3;
-                        border-radius: 4px;
-                        HorizontalLayout {
-                            padding-left: 8px;
-                            padding-right: 8px;
-                            padding-top: 4px;
-                            padding-bottom: 4px;
-                            alignment: center; // Fix vertical centering
-                            Text {
-                                text: root.info.actual_used;
-                                color: Theme.accent;
-                                font-family: "Consolas";
-                                font-size: 13px;
-                                font-weight: 500;
-                                vertical-alignment: center;
-                            }
-                        }
-                    }
+                InfoRow {
+                    label: AppI18n.t("dialog.internal_usage", [AppI18n.version]);
+                    value: root.info.actual_used;
+                    is_pill: true;
                 }
-                
-                // VHDX Size (Pill style match)
-                HorizontalLayout {
-                    spacing: 12px;
-                    alignment: start;
-                    Text {
-                        text: AppI18n.t("dialog.vhdx_usage", [AppI18n.version]);
-                        width: 100px;
-                        color: Theme.text_secondary;
-                        font-size: 13px;
-                        vertical-alignment: center;
-                    }
 
-                    Rectangle {
-                        background: Theme.dark_mode ? #1E1E1E : #F3F3F3;
-                        border-radius: 4px;
-                        HorizontalLayout {
-                            padding-left: 8px;
-                            padding-right: 8px;
-                            padding-top: 4px;
-                            padding-bottom: 4px;
-                            alignment: center; // Fix vertical centering
-                            Text {
-                                text: root.info.vhdx_size;
-                                color: Theme.accent;
-                                font-family: "Consolas"; // Match font
-                                font-size: 13px;
-                                font-weight: 500;
-                                vertical-alignment: center;
-                            }
-                        }
-                    }
+                InfoRow {
+                    label: AppI18n.t("dialog.vhdx_usage", [AppI18n.version]);
+                    value: root.info.vhdx_size;
+                    is_pill: true;
                 }
 
                 InfoRow {
@@ -205,8 +178,7 @@ export component InformationDialog inherits Rectangle {
 
             // Footer
             HorizontalLayout {
-                alignment: end;
-                padding-top: 0px; // Reduce whitespace
+                alignment: AppI18n.is-rtl ? start : end;
                 Rectangle {
                     width: 90px;
                     height: 32px;
@@ -215,7 +187,8 @@ export component InformationDialog inherits Rectangle {
                     Text {
                         text: AppI18n.t("dialog.confirm", [AppI18n.version]);
                         color: white;
-                        font-size: 13px;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         font-weight: 500;
                         horizontal-alignment: center;
                         vertical-alignment: center;

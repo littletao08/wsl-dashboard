@@ -29,6 +29,34 @@ export struct RootFSHelpItem {
     url: string,
 }
 
+export struct SettingsStrings {
+    language: string,
+    auto_update: string,
+    log_level: string,
+    log_retention: string,
+    log_path: string,
+    select_folder: string,
+    install_dir: string,
+    auto_close: string,
+    auto_start: string,
+    minimize_tray: string,
+    close_to_tray: string,
+    save: string,
+}
+
+export struct AboutStrings {
+    title: string,
+    description: string,
+    version: string,
+    check_update: string,
+    website: string,
+    issues: string,
+    discussions: string,
+    github: string,
+    license: string,
+    copyright: string,
+}
+
 export global Theme {
     in property <bool> dark_mode: false;
     out property <color> background: dark_mode ? #1E1E1E : #F3F3F3;
@@ -52,8 +80,9 @@ export global Theme {
     out property <color> input_bg: dark_mode ? #252526 : #FFFFFF;
     out property <color> input_border: dark_mode ? #3E3E42 : #D9D9D9;
 
+    // Compatibility of Chinese and Japanese character display on Western language operating systems
     // Font style
-    out property <string> default_font: "Segoe UI";
+    in-out property <string> default_font: "Microsoft YaHei UI";
     out property <string> icon_font: "Segoe Fluent Icons";
 }
 
@@ -70,5 +99,19 @@ export global AppInfo {
 
 export global AppI18n {
     in-out property <int> version: 0;
+    in-out property <bool> is-rtl: false;
+    in-out property <string> locale-code: "en";
     pure callback t(string, [string]) -> string;
+}
+
+export global LayoutConstants {
+    out property <length> padding-start: AppI18n.is-rtl ? 0 : 10px;
+    out property <length> padding-end: AppI18n.is-rtl ? 10px : 0;
+    out property <LayoutAlignment> row-alignment: AppI18n.is-rtl ? LayoutAlignment.end : LayoutAlignment.start;
+    // Enhanced font scaling for complex scripts:
+    // - Arabic (ar), Urdu (ur), Persian (fa), Hebrew (he): RTL, highly complex connecting scripts -> 1.35x
+    // - Hindi (hi), Bengali (bn): LTR, complex conjuncts/matras -> 1.20x
+    // - Others (en, zh, ja, ko, etc.): 1.0x
+    out property <float> font-scale: 
+        (AppI18n.locale-code == "ar" || AppI18n.locale-code == "ur" || AppI18n.locale-code == "fa" || AppI18n.locale-code == "he") ? 1.35 : (AppI18n.locale-code == "hi" || AppI18n.locale-code == "bn") ? 1.20 : 1.0;
 }

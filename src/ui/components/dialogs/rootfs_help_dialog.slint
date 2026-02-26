@@ -1,5 +1,10 @@
-import { Button } from "std-widgets.slint";
-import { Theme, RootFSHelpItem, AppI18n } from "../../theme.slint";
+import {
+    Theme,
+    RootFSHelpItem,
+    AppI18n,
+    LayoutConstants,
+} from "../../theme.slint";
+import { CustomButton } from "../form_widgets.slint";
 
 export component RootFSHelpDialog inherits Rectangle {
     callback close;
@@ -24,10 +29,11 @@ export component RootFSHelpDialog inherits Rectangle {
             spacing: 12px;
             Text {
                 text: AppI18n.t("dialog.rootfs_help_title", [AppI18n.version]);
-                font-size: 16px;
+                font-size: 16px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 font-weight: 500;
                 color: Theme.text_primary;
-                horizontal-alignment: left;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
 
             // Table Header
@@ -36,24 +42,36 @@ export component RootFSHelpDialog inherits Rectangle {
                 padding-left: 4px;
                 padding-right: 4px;
                 spacing: 12px;
-                Text {
-                    text: AppI18n.t("dialog.distributor", [AppI18n.version]);
-                    width: 100px;
-                    font-weight: 500;
-                    vertical-alignment: center;
-                    horizontal-alignment: left;
-                    color: Theme.text_secondary;
-                    font-size: 13px;
-                }
-
-                Text {
+                if (AppI18n.is-rtl): Text {
                     text: AppI18n.t("dialog.link", [AppI18n.version]);
                     horizontal-stretch: 1;
                     font-weight: 500;
                     vertical-alignment: center;
                     horizontal-alignment: left;
                     color: Theme.text_secondary;
-                    font-size: 13px;
+                    font-size: 13px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
+                }
+                Text {
+                    text: AppI18n.t("dialog.distributor", [AppI18n.version]);
+                    width: 100px;
+                    font-weight: 500;
+                    vertical-alignment: center;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
+                    color: Theme.text_secondary;
+                    font-size: 13px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
+                }
+
+                if (!AppI18n.is-rtl): Text {
+                    text: AppI18n.t("dialog.link", [AppI18n.version]);
+                    horizontal-stretch: 1;
+                    font-weight: 500;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                    color: Theme.text_secondary;
+                    font-size: 13px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                 }
             }
 
@@ -74,24 +92,41 @@ export component RootFSHelpDialog inherits Rectangle {
                         padding-left: 4px;
                         padding-right: 4px;
                         spacing: 12px;
+                        if (AppI18n.is-rtl): Text {
+                            text: item.url;
+                            color: ta-link-rtl.has-hover ? Theme.accent : #0078d4;
+                            vertical-alignment: center;
+                            horizontal-alignment: left;
+                            font-size: 13px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
+                            overflow: elide;
+                            horizontal-stretch: 1;
+                            ta-link-rtl := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.open_url(item.url);
+                                }
+                            }
+                        }
                         Text {
                             text: item.name;
                             width: 100px;
                             vertical-alignment: center;
-                            horizontal-alignment: left;
+                            horizontal-alignment: AppI18n.is-rtl ? right : left;
                             color: Theme.text_primary;
-                            font-size: 13px;
+                            font-size: 13px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
                         }
-                        
-                        // Link Area
-                        Text {
-                            horizontal-stretch: 1;
+
+                        if (!AppI18n.is-rtl): Text {
                             text: item.url;
                             color: ta-link.has-hover ? Theme.accent : #0078d4;
                             vertical-alignment: center;
                             horizontal-alignment: left;
-                            font-size: 13px;
+                            font-size: 13px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
                             overflow: elide;
+                            horizontal-stretch: 1;
                             ta-link := TouchArea {
                                 mouse-cursor: pointer;
                                 clicked => {
@@ -105,8 +140,8 @@ export component RootFSHelpDialog inherits Rectangle {
 
             // Footer
             HorizontalLayout {
-                alignment: end;
-                Button {
+                alignment: AppI18n.is-rtl ? start : end;
+                CustomButton {
                     text: AppI18n.t("dialog.confirm", [AppI18n.version]);
                     primary: true;
                     height: 30px;

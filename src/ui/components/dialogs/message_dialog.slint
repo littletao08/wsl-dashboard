@@ -1,5 +1,5 @@
-import { Button } from "std-widgets.slint";
-import { Theme, AppI18n } from "../../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../../theme.slint";
+import { CustomButton } from "../form_widgets.slint";
 
 export component MessageDialog inherits Rectangle {
     in property <string> message;
@@ -22,58 +22,65 @@ export component MessageDialog inherits Rectangle {
         alignment: start;
         Text {
             text: AppI18n.t("dialog.info", [AppI18n.version]);
-            font-size: 16px;
+            font-size: 16px * LayoutConstants.font-scale;
+            font-family: Theme.default_font;
             font-weight: 500;
             color: Theme.text_primary;
+            horizontal-alignment: AppI18n.is-rtl ? right : left;
         }
 
         VerticalLayout {
             spacing: 8px;
             Text {
                 text: message;
-                font-size: 14px;
+                font-size: 14px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 color: Theme.text_primary;
                 wrap: word-wrap;
-                horizontal-alignment: left;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
 
             if root.link_text != "": HorizontalLayout {
-                alignment: center;
+                alignment: AppI18n.is-rtl ? end : start;
                 TouchArea {
-                    width: link_text_item.preferred-width;
-                    height: 24px;
+                    width: 100%;
                     mouse-cursor: pointer;
                     clicked => {
                         root.link_clicked();
                     }
                     link_text_item := Text {
                         text: root.link_text;
-                        font-size: 14px;
+                        width: 100%;
+                        font-size: 14px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: parent.has-hover ? Theme.accent.brighter(20%) : Theme.accent;
                         font-italic: true;
                         font-weight: 500;
+                        wrap: word-wrap;
                         vertical-alignment: center;
-                        horizontal-alignment: center;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                     }
                 }
             }
             if root.action_text != "": HorizontalLayout {
-                alignment: center;
+                alignment: AppI18n.is-rtl ? end : start;
                 TouchArea {
-                    width: action_text_item.preferred-width;
-                    height: 24px;
+                    width: 100%;
                     mouse-cursor: pointer;
                     clicked => {
                         root.action_clicked();
                     }
                     action_text_item := Text {
                         text: root.action_text;
-                        font-size: 14px;
+                        width: 100%;
+                        font-size: 14px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: parent.has-hover ? Theme.accent.brighter(20%) : Theme.accent;
                         font-italic: true;
                         font-weight: 500;
+                        wrap: word-wrap;
                         vertical-alignment: center;
-                        horizontal-alignment: center;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                     }
                 }
             }
@@ -81,10 +88,11 @@ export component MessageDialog inherits Rectangle {
 
         HorizontalLayout {
             alignment: center;
-            Button {
+            CustomButton {
                 text: AppI18n.t("dialog.confirm", [AppI18n.version]);
                 height: 32px;
                 width: 100px;
+                primary: true;
                 clicked => {
                     root.close();
                 }

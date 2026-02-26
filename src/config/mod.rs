@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use tracing::{info, error};
 
 mod migration;
+mod instances;
 pub mod models;
 
 pub use models::*;
@@ -125,37 +126,19 @@ impl ConfigManager {
 
         info!("Refreshing system language and timezone information...");
         
-        // Get system language and timezone
-        let mut cmd = tokio::process::Command::new("powershell");
-        cmd.args(&["-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $lang = (Get-Culture).Name; $offset = (Get-TimeZone).BaseUtcOffset; $sign = if ($offset.Ticks -ge 0) {'+'} else {'-'}; $tz = 'UTC{0}{1:00}:{2:00}' -f $sign, [Math]::Abs($offset.Hours), [Math]::Abs($offset.Minutes); \"$lang|$tz\""]);
-
-        #[cfg(windows)]
-        {
-            #[allow(unused_imports)]
-            use std::os::windows::process::CommandExt;
-            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
-        }
-
-        if let Ok(output) = cmd.output().await
-        {
-            let res = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            let parts: Vec<&str> = res.split('|').collect();
-            if parts.len() == 2 {
-                config.system.system_language = parts[0].to_string();
-                config.system.timezone = parts[1].to_string();
-            }
-        }
+        config.system.system_language = crate::utils::registry::get_system_locale();
+        config.system.timezone = crate::utils::registry::get_system_timezone();
     }
 
     // Load configuration file
-    async fn load_config(path: &PathBuf) -> Result<Config, Box<dyn std::error::Error>> {
+    async fn load_config(path: &PathBuf) -> Result<Config, Box<dyn std::error::Error + Send + Sync>> {
         let content = fs::read_to_string(path)?;
         let config: Config = toml::from_str(&content)?;
         Ok(config)
     }
 
     // Save configuration file
-    fn save_config(path: &PathBuf, config: &mut Config) -> Result<(), Box<dyn std::error::Error>> {
+    fn save_config(path: &PathBuf, config: &mut Config) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Update modify-time each time saving
         config.settings.modify_time = chrono::Utc::now().timestamp_millis().to_string();
         let toml_string = toml::to_string_pretty(config)?;
@@ -174,7 +157,7 @@ impl ConfigManager {
     }
 
     // Update user settings and save
-    pub fn update_settings(&mut self, settings: UserSettings) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_settings(&mut self, settings: UserSettings) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Ensure new paths exist
         let _ = fs::create_dir_all(&settings.distro_location);
         let _ = fs::create_dir_all(&settings.logs_location);
@@ -193,8 +176,21 @@ impl ConfigManager {
         &self.config.settings
     }
 
+    // Get tray settings
+    pub fn get_tray_settings(&self) -> &TraySettings {
+        &self.config.tray
+    }
+
+    // Update tray settings and save
+    pub fn update_tray_settings(&mut self, tray: TraySettings) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.config.tray = tray;
+        Self::save_config(&self.config_path, &mut self.config)?;
+        info!("✅ Tray configuration saved successfully");
+        Ok(())
+    }
+
     // Update popup detection timestamp
-    pub fn update_check_time(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_check_time(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.config.settings.check_time = chrono::Utc::now().timestamp_millis().to_string();
         Self::save_config(&self.config_path, &mut self.config)?;
         info!("Updated check-time to: {}", self.config.settings.check_time);
@@ -204,35 +200,11 @@ impl ConfigManager {
     // --- Instances Config Management ---
 
     fn load_instances() -> InstancesContainer {
-        let path = Self::get_instances_path();
-        if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(mut container) = toml::from_str::<InstancesContainer>(&content) {
-                    let old_version = container.common.setting_version;
-                    migration::migrate_instances_config(&mut container);
-                    
-                    // If version was upgraded, save it back immediately to complete fields
-                    if old_version < INSTANCES_VERSION {
-                        let _ = Self::save_instances_to_disk(&path, &container);
-                    }
-                    return container;
-                }
-            }
-        }
-        InstancesContainer::new()
+        instances::load_instances(&Self::get_instances_path())
     }
 
-    fn save_instances_to_disk(path: &std::path::Path, container: &InstancesContainer) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(parent) = path.parent() {
-            let _ = fs::create_dir_all(parent);
-        }
-
-        let mut toml_string = toml::to_string_pretty(container)?;
-        // Ensure UNIX line endings 
-        toml_string = toml_string.replace("\r\n", "\n");
-        
-        fs::write(path, toml_string)?;
-        Ok(())
+    fn save_instances_to_disk(path: &std::path::Path, container: &InstancesContainer) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        instances::save_instances_to_disk(path, container)
     }
 
     pub fn get_instance_config(&self, distro_name: &str) -> DistroInstanceConfig {
@@ -249,7 +221,7 @@ impl ConfigManager {
         }
     }
 
-    pub fn update_instance_config(&self, distro_name: &str, config: DistroInstanceConfig) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_instance_config(&self, distro_name: &str, config: DistroInstanceConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut container = Self::load_instances();
         container.instances.insert(distro_name.to_string(), config);
         container.common.modify_time = chrono::Utc::now().timestamp_millis().to_string();
@@ -261,7 +233,7 @@ impl ConfigManager {
         Ok(())
     }
 
-    pub fn remove_instance_config(&self, distro_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn remove_instance_config(&self, distro_name: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut container = Self::load_instances();
         if container.instances.remove(distro_name).is_some() {
             container.common.modify_time = chrono::Utc::now().timestamp_millis().to_string();
@@ -269,6 +241,20 @@ impl ConfigManager {
             Self::save_instances_to_disk(&path, &container)?;
             info!("✅ Removed instance configuration for '{}'", distro_name);
         }
+        Ok(())
+    }
+
+    pub fn get_cached_distros(&self) -> Vec<CachedDistro> {
+        let container = Self::load_instances();
+        container.last_distros
+    }
+
+    pub fn update_cached_distros(&self, distros: Vec<CachedDistro>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let mut container = Self::load_instances();
+        container.last_distros = distros;
+        container.common.modify_time = chrono::Utc::now().timestamp_millis().to_string();
+        let path = Self::get_instances_path();
+        Self::save_instances_to_disk(&path, &container)?;
         Ok(())
     }
 }

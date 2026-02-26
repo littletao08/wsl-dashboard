@@ -1,4 +1,4 @@
-import { Theme } from "../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../theme.slint";
 import "../../../assets/font/icons.ttf";
 
 export component SidebarItem inherits Rectangle {
@@ -7,13 +7,16 @@ export component SidebarItem inherits Rectangle {
     in property <bool> selected: false;
     in property <bool> collapsed: false;
     callback clicked;
+    // width: 100%; // Ensure full width for alignment
     height: 36px;
     border-radius: 4px;
     background: selected ? Theme.selected_bg : (touch.has-hover ? Theme.hover_bg : transparent);
     
     // Tooltip
-    if (collapsed && touch.has-hover): Rectangle {
-        x: parent.width + 8px;
+    Rectangle {
+        visible: collapsed && touch.has-hover;
+        opacity: (collapsed && touch.has-hover) ? 1 : 0;
+        x: AppI18n.is-rtl ? -self.width - 8px : parent.width + 8px;
         y: (parent.height - self.height) / 2;
         width: label.width + 16px;
         height: 28px;
@@ -23,45 +26,91 @@ export component SidebarItem inherits Rectangle {
         label := Text {
             text: root.text;
             color: white;
-            font-size: 12px;
+            font-size: 12px * LayoutConstants.font-scale;
             font-family: Theme.default_font;
             horizontal-alignment: center;
             vertical-alignment: center;
         }
     }
+
+    // Stable HorizontalLayout structure using alignment instead of branching
     HorizontalLayout {
-        padding-left: 13px;
-        alignment: start;
-        spacing: 12px;
-        Text {
-            text: icon;
-            font-size: 16px;
-            font-family: Theme.icon_font;
-            color: (selected || touch.has-hover) ? Theme.accent : Theme.text_secondary;
-            vertical-alignment: center;
-            horizontal-alignment: center;
-            width: 20px;
+        // Match Hamburger menu padding (13px) for perfect vertical alignment
+        padding-left: AppI18n.is-rtl ? 0 : 13px;
+        padding-right: AppI18n.is-rtl ? 13px : 0;
+        spacing: root.collapsed ? 0px : 12px;
+        alignment: AppI18n.is-rtl ? end : start;
+        width: 100%; // Explicitly fill parent
+
+        animate spacing {
+            duration: 200ms;
+            easing: ease-out-quad;
         }
 
-        if (!collapsed && text != ""): Text {
-            text: text;
-            font-size: 14px;
-            font-family: Theme.default_font;
-            font-weight: selected ? 500 : 400;
-            color: (selected || touch.has-hover) ? Theme.text_primary : Theme.text_secondary;
-            vertical-alignment: center;
-            overflow: elide;
+        // Slot 1 (Icon in LTR, Text in RTL)
+        Rectangle {
+            // Fixed width for icon (20px) in LTR mode.
+            // In RTL mode (Text), width animates between 0 and pref.
+            width: (!AppI18n.is-rtl) ? 20px : (root.collapsed ? 0px : icon_text.preferred-width);
+            visible: !AppI18n.is-rtl || !root.collapsed || self.width > 0px;
+            clip: true;
+            animate width {
+                duration: 200ms;
+                easing: ease-out-quad;
+            }
+            icon_text := Text {
+                width: 100%; // Fill the container
+                text: (!AppI18n.is-rtl) ? icon : root.text;
+                font-size: (!AppI18n.is-rtl) ? 16px : (14px * LayoutConstants.font-scale);
+                font-family: (!AppI18n.is-rtl) ? Theme.icon_font : Theme.default_font;
+                font-weight: selected ? 500 : 400;
+                color: (selected || touch.has-hover) ? ((!AppI18n.is-rtl) ? Theme.accent : Theme.text_primary) : Theme.text_secondary;
+                vertical-alignment: center;
+                horizontal-alignment: (!AppI18n.is-rtl) ? center : right; // Text aligns right in RTL
+                overflow: elide;
+                opacity: (AppI18n.is-rtl && root.collapsed && parent.width < 10px) ? 0 : 1;
+                animate opacity { duration: 150ms; }
+            }
+        }
+
+        // Slot 2 (Text in LTR, Icon in RTL)
+        Rectangle {
+            // Fixed width for icon (20px) in RTL mode.
+            // In LTR mode (Text), width animates between 0 and pref.
+            width: (AppI18n.is-rtl) ? 20px : (root.collapsed ? 0px : secondary_text.preferred-width);
+            visible: (AppI18n.is-rtl) || !root.collapsed || self.width > 0px;
+            clip: true;
+            animate width {
+                duration: 200ms;
+                easing: ease-out-quad;
+            }
+            secondary_text := Text {
+                width: 100%; // Fill the container
+                text: (AppI18n.is-rtl) ? icon : root.text;
+                font-size: (AppI18n.is-rtl) ? 16px : (14px * LayoutConstants.font-scale);
+                font-family: (AppI18n.is-rtl) ? Theme.icon_font : Theme.default_font;
+                font-weight: selected ? 500 : 400;
+                color: (selected || touch.has-hover) ? ((AppI18n.is-rtl) ? Theme.accent : Theme.text_primary) : Theme.text_secondary;
+                vertical-alignment: center;
+                horizontal-alignment: (AppI18n.is-rtl) ? center : left; // Text aligns left in LTR
+                overflow: elide;
+                opacity: (!AppI18n.is-rtl && root.collapsed && parent.width < 10px) ? 0 : 1;
+                animate opacity { duration: 150ms; }
+            }
         }
     }
 
-    if (selected): Rectangle {
-        x: 0;
+    Rectangle {
+        visible: selected;
+        opacity: selected ? 1 : 0;
+        x: AppI18n.is-rtl ? parent.width - 3px : 0;
         width: 3px;
         height: 16px;
         background: Theme.accent;
         border-radius: 1.5px;
         y: (parent.height - self.height) / 2;
     }
+
     touch := TouchArea {
         clicked => {
             root.clicked();
@@ -71,39 +120,55 @@ export component SidebarItem inherits Rectangle {
 
 export component ActionIcon inherits Rectangle {
     in property <string> icon;
-    in property <string> tooltip;
+    in property <image> icon_image;
     in property <bool> is_font_icon: false;
+    in property <string> tooltip: "";
     callback clicked;
     width: 28px;
     height: 28px;
     border-radius: 4px;
-    background: touch.has-hover ? Theme.hover_bg : transparent;
-
-    // Tooltip
-    if (touch.has-hover && tooltip != ""): Rectangle {
+    background: touch.pressed ? Theme.selected_bg : (touch.has-hover ? Theme.hover_bg : transparent);
+    
+    // Tooltip - Use properties instead of conditional creation
+    Rectangle {
+        visible: touch.has-hover && tooltip != "";
+        opacity: (touch.has-hover && tooltip != "") ? 1 : 0;
         background: Theme.dark_mode ? #2D2D30 : #FFFFFF;
         border-color: Theme.border_color;
         border-width: 1px;
         border-radius: 4px;
+        
+        // Dynamic Positioning - Reverted to static history behavior
         x: (parent.width - self.width) / 2;
         y: -10px;
         width: tt_text.width + 12px;
-        height: tt_text.height + 2px;
+        height: tt_text.height + 6px;
         tt_text := Text {
             text: root.tooltip;
             color: Theme.text_primary;
-            font-size: 11px;
+            font-size: 11px * LayoutConstants.font-scale;
+            font-family: Theme.default_font;
             horizontal-alignment: center;
             vertical-alignment: center;
         }
     }
+
     Text {
+        visible: is_font_icon;
         text: icon;
         font-size: 14px;
-        font-family: is_font_icon ? Theme.icon_font : "default";
-        color: Theme.text_secondary;
+        font-family: Theme.icon_font;
+        color: Theme.text_primary;
         horizontal-alignment: center;
         vertical-alignment: center;
+    }
+
+    Image {
+        visible: !is_font_icon;
+        source: icon_image;
+        width: 16px;
+        height: 16px;
+        image-fit: contain;
     }
 
     touch := TouchArea {
@@ -115,17 +180,17 @@ export component ActionIcon inherits Rectangle {
 
 export component WindowControlButton inherits Rectangle {
     in property <string> text;
-    in property <color> hover-color: Theme.hover_bg;
-    in property <color> text-color: Theme.text_primary;
+    in property <brush> hover-color: Theme.selected_bg;
+    in property <brush> icon_color: Theme.text_primary;
     callback clicked;
     width: 46px;
-    height: 40px;
+    height: 100%;
     background: touch.has-hover ? hover-color : transparent;
     Text {
         text: text;
+        font-size: 10px;
         font-family: Theme.icon_font;
-        font-size: 12px;
-        color: (touch.has-hover && root.hover-color == #E81123) ? #FFFFFF : text-color;
+        color: touch.has_hover ? (text == "\u{E8BB}" ? white : Theme.text_primary) : icon_color;
         horizontal-alignment: center;
         vertical-alignment: center;
     }

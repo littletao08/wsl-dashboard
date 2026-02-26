@@ -1,5 +1,5 @@
-import { Button, LineEdit } from "std-widgets.slint";
-import { Theme, AppI18n } from "../../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../../theme.slint";
+import { CustomButton, CustomLineEdit } from "../form_widgets.slint";
 
 export component MoveDialog inherits Rectangle {
     in property <string> distro_name;
@@ -14,7 +14,7 @@ export component MoveDialog inherits Rectangle {
 
     Rectangle {
         width: 450px;
-        height: 220px;
+        height: 240px;
         background: Theme.card_bg;
         border-radius: 8px;
         border-width: 1px;
@@ -25,30 +25,33 @@ export component MoveDialog inherits Rectangle {
             padding: 24px;
             spacing: 16px;
             Text {
-                text: AppI18n.t("dialog.move_title", [AppI18n.version]) + ": " + distro_name;
-                font-size: 18px;
+                text: AppI18n.t("dialog.move_title", [root.distro_name, AppI18n.version]);
+                font-size: 18px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 font-weight: 500;
                 color: Theme.text_primary;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
 
             VerticalLayout {
                 spacing: 8px;
                 Text {
                     text: AppI18n.t("dialog.target_path", [AppI18n.version]) + ":";
-                    font-size: 13px;
+                    font-size: 13px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                     color: Theme.text_secondary;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
                 }
 
                 HorizontalLayout {
                     spacing: 8px;
-                    LineEdit {
+                    if (!AppI18n.is-rtl): CustomLineEdit {
                         text <=> move_path;
-                        read-only: true;
+                        enabled: false;
                         height: 32px;
                         horizontal-stretch: 1;
                     }
-
-                    Button {
+                    CustomButton {
                         text: AppI18n.t("settings.select_folder", [AppI18n.version]);
                         height: 32px;
                         enabled: root.enabled;
@@ -56,23 +59,41 @@ export component MoveDialog inherits Rectangle {
                             root.browse();
                         }
                     }
+
+                    if (AppI18n.is-rtl): CustomLineEdit {
+                        text <=> move_path;
+                        enabled: false;
+                        height: 32px;
+                        horizontal-stretch: 1;
+                    }
                 }
             }
 
             if (error_msg != ""): Text {
                 text: error_msg;
                 color: #ff3333;
-                font-size: 12px;
+                font-size: 12px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 wrap: word-wrap;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
             Rectangle {
                 vertical-stretch: 1;
             } // Spacer
 
             HorizontalLayout {
-                alignment: end;
+                alignment: AppI18n.is-rtl ? start : end;
                 spacing: 12px;
-                Button {
+                if (AppI18n.is-rtl): CustomButton {
+                    text: AppI18n.t("dialog.move_confirm", [AppI18n.version]);
+                    height: 32px;
+                    primary: true;
+                    enabled: root.enabled;
+                    clicked => {
+                        root.confirm(move_path);
+                    }
+                }
+                CustomButton {
                     text: AppI18n.t("dialog.cancel", [AppI18n.version]);
                     height: 32px;
                     clicked => {
@@ -80,7 +101,7 @@ export component MoveDialog inherits Rectangle {
                     }
                 }
 
-                Button {
+                if (!AppI18n.is-rtl): CustomButton {
                     text: AppI18n.t("dialog.move_confirm", [AppI18n.version]);
                     height: 32px;
                     primary: true;

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 // Configuration file version constant
-pub const SETTINGS_VERSION: u32 = 2;
+pub const SETTINGS_VERSION: u32 = 4;
 
 // Application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,13 +47,37 @@ pub struct UserSettings {
     pub auto_shutdown: bool,
     #[serde(rename = "dark-mode", default)]
     pub dark_mode: bool,
+    #[serde(rename = "sidebar-collapsed", default)]
+    pub sidebar_collapsed: bool,
     #[serde(rename = "log-level", default = "default_log_level")]
     pub log_level: u8,
     #[serde(rename = "log-days", default = "default_log_days")]
     pub log_days: u8,
 }
 
-pub fn default_log_level() -> u8 { 3 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraySettings {
+    #[serde(default)]
+    pub autostart: bool,
+    #[serde(rename = "start-minimized", default)]
+    pub start_minimized: bool,
+    #[serde(rename = "close-to-tray", default = "default_close_to_tray")]
+    pub close_to_tray: bool,
+}
+
+pub fn default_close_to_tray() -> bool { true }
+
+impl Default for TraySettings {
+    fn default() -> Self {
+        Self {
+            autostart: false,
+            start_minimized: false,
+            close_to_tray: true,
+        }
+    }
+}
+
+pub fn default_log_level() -> u8 { 4 }
 pub fn default_log_days() -> u8 { 7 }
 pub fn default_check_update() -> u8 { 7 }
 
@@ -63,6 +87,8 @@ pub struct Config {
     pub application: ApplicationConfig,
     pub system: SystemConfig,
     pub settings: UserSettings,
+    #[serde(default)]
+    pub tray: TraySettings,
 }
 
 impl Config {
@@ -104,9 +130,12 @@ impl Config {
                 ui_language: "auto".to_string(),
                 auto_shutdown: false,
                 dark_mode: false,
-                log_level: 3,
+                sidebar_collapsed: false,
+                log_level: 4,
                 log_days: 7,
             },
+
+            tray: TraySettings::default(),
         }
     }
 }
@@ -114,6 +143,15 @@ impl Config {
 // --- Instance-specific configuration (instances.toml) ---
 
 pub const INSTANCES_VERSION: u32 = 1;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CachedDistro {
+    pub name: String,
+    pub status: String,
+    pub version: String,
+    #[serde(rename = "is-default", default)]
+    pub is_default: bool,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceCommonConfig {
@@ -152,6 +190,8 @@ impl Default for DistroInstanceConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstancesContainer {
     pub common: InstanceCommonConfig,
+    #[serde(default)]
+    pub last_distros: Vec<CachedDistro>,
     pub instances: std::collections::HashMap<String, DistroInstanceConfig>,
 }
 
@@ -162,6 +202,7 @@ impl InstancesContainer {
                 setting_version: INSTANCES_VERSION,
                 modify_time: chrono::Utc::now().timestamp_millis().to_string(),
             },
+            last_distros: Vec::new(),
             instances: std::collections::HashMap::new(),
         }
     }

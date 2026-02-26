@@ -1,4 +1,4 @@
-import { Theme, AppI18n } from "../../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../../theme.slint";
 
 export component OperationOverlay inherits Rectangle {
     in property <string> message: AppI18n.t("dialog.processing", [AppI18n.version]);
@@ -37,7 +37,8 @@ export component OperationOverlay inherits Rectangle {
 
             Text {
                 text: message;
-                font-size: 14px;
+                font-size: 14px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 color: Theme.text_primary;
                 horizontal-alignment: center;
                 vertical-alignment: center;

@@ -1,26 +1,243 @@
-import { Theme, Distro, AppI18n } from "../theme.slint";
 import { ActionIcon } from "common.slint";
+import { Theme, Distro, AppI18n, LayoutConstants } from "../theme.slint";
+
+// Distribution information display component
+component DistroInfo inherits VerticalLayout {
+    in property <Distro> distro;
+    in property <bool> is-rtl;
+    spacing: 0px;
+    alignment: center; // Vertically center
+    
+    Text {
+        text: distro.name;
+        font-size: 14px * LayoutConstants.font-scale;
+        font-weight: 400;
+        color: Theme.text_primary;
+        overflow: elide;
+        horizontal-alignment: is-rtl ? right : left;
+    }
+
+    Text {
+        text: AppI18n.t(distro.status == "Running" ? "distro.running" : (distro.status == "Stopped" ? "distro.stopped" : "distro.installing"), [AppI18n.version]);
+        font-size: 12px * LayoutConstants.font-scale;
+        color: Theme.text_secondary;
+        horizontal-alignment: is-rtl ? right : left;
+    }
+}
+
+// Badge component
+component DistroBadge inherits VerticalLayout {
+    in property <Distro> distro;
+    width: 32px;
+    alignment: center; // Vertically center
+    
+    Rectangle {
+        width: 32px;
+        height: 32px;
+        
+        // Prefer displaying the icon (has_icon becomes true after successful backend detection)
+        Image {
+            visible: distro.has_icon;
+            width: 24px;
+            height: 24px;
+            source: distro.icon;
+            image-fit: contain;
+        }
+
+        // Show initials only when no icon is available
+        if (!distro.has_icon): Rectangle {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: Theme.dark_mode ? #3E3E42 : #E0E0E0;
+            Text {
+                text: distro.initial;
+                font-size: 12px * LayoutConstants.font-scale;
+                font-weight: 800;
+                color: Theme.text_primary;
+            }
+        }
+    }
+}
+
+// Start/Stop button
+component StartStopButton inherits VerticalLayout {
+    in property <Distro> distro;
+    callback start();
+    callback stop();
+    width: 28px;
+    alignment: center; // Vertically center
+
+    ActionIcon {
+        icon: (distro.status == "Running") ? "\u{E769}" : "\u{E768}";
+        is_font_icon: true;
+        tooltip: (distro.status == "Running") ? AppI18n.t("distro.stop", [AppI18n.version]) : AppI18n.t("distro.start", [AppI18n.version]);
+        clicked => {
+            if (distro.status == "Running") {
+                root.stop();
+            } else {
+                root.start();
+            }
+        }
+    }
+}
+
+// Quick action icon group (terminal, etc.)
+component QuickActionIcons inherits VerticalLayout {
+    in property <bool> expanded;
+    callback terminal();
+    callback vscode();
+    callback folder();
+    callback expand();
+    alignment: center; // Vertically center (core)
+    
+    HorizontalLayout {
+        spacing: 12px;
+        
+        // In RTL, the collapse icon is at the front (visually leftmost)
+        if (AppI18n.is-rtl): ActionIcon {
+            icon: expanded ? "\u{E70E}" : "\u{E70D}";
+            is_font_icon: true;
+            tooltip: expanded ? AppI18n.t("distro.collapse", [AppI18n.version]) : AppI18n.t("distro.expand", [AppI18n.version]);
+            clicked => {
+                root.expand();
+            }
+        }
+        ActionIcon {
+            icon: "\u{E756}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.terminal", [AppI18n.version]);
+            clicked => {
+                root.terminal();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E70B}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.vscode", [AppI18n.version]);
+            clicked => {
+                root.vscode();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E8B7}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.explorer", [AppI18n.version]);
+            clicked => {
+                root.folder();
+            }
+        }
+
+        // In LTR, the collapse icon is at the back (visually rightmost)
+        if (!AppI18n.is-rtl): ActionIcon {
+            icon: expanded ? "\u{E70E}" : "\u{E70D}";
+            is_font_icon: true;
+            tooltip: expanded ? AppI18n.t("distro.collapse", [AppI18n.version]) : AppI18n.t("distro.expand", [AppI18n.version]);
+            clicked => {
+                root.expand();
+            }
+        }
+    }
+}
+
+// Expanded action icon group
+component ExpandedActionIcons inherits VerticalLayout {
+    callback information();
+    callback restart();
+    callback export_distro();
+    callback clone();
+    callback move_distro();
+    callback delete_distro();
+    callback settings();
+    alignment: center; // Vertically center (core)
+    
+    HorizontalLayout {
+        spacing: 16px;
+        ActionIcon {
+            icon: "\u{E890}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.information", [AppI18n.version]);
+            clicked => {
+                root.information();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E777}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.restart", [AppI18n.version]);
+            clicked => {
+                root.restart();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E78C}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.export", [AppI18n.version]);
+            clicked => {
+                root.export_distro();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E8DE}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.move", [AppI18n.version]);
+            clicked => {
+                root.move_distro();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E8C8}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.clone", [AppI18n.version]);
+            clicked => {
+                root.clone();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E74D}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.delete", [AppI18n.version]);
+            clicked => {
+                root.delete_distro();
+            }
+        }
+
+        ActionIcon {
+            icon: "\u{E713}";
+            is_font_icon: true;
+            tooltip: AppI18n.t("distro.settings", [AppI18n.version]);
+            clicked => {
+                root.settings();
+            }
+        }
+    }
+}
 
 export component DistroCard inherits Rectangle {
-    in property <bool> show_information: false;
-    in-out property <bool> show_settings: false;
-    in property <bool> show_rootfs_help: false;
     in property <Distro> distro;
-    in-out property <bool> expanded: false;
+    in property <bool> expanded: false;
     in property <bool> sole_distro: false;
-    callback start_clicked;
-    callback stop_clicked;
-    callback restart_clicked;
-    callback terminal_clicked;
-    callback folder_clicked;
-    callback vscode_clicked;
-    callback export_clicked;
-    callback settings_clicked;
+    callback start_clicked();
+    callback stop_clicked();
+    callback restart_clicked();
+    callback terminal_clicked();
+    callback vscode_clicked();
+    callback folder_clicked();
+    callback export_clicked();
+    callback settings_clicked();
     callback delete_clicked;
     callback edit_bashrc_clicked;
     callback clone_clicked;
     callback move_clicked;
     callback information_clicked;
+    callback expand_clicked;
     height: expanded ? 96px : 48px;
     background: (distro.is_default && !sole_distro) ? (Theme.dark_mode ? #2b3c4e : #e6f4ff98) : Theme.card_bg;
     border-radius: 6px;
@@ -30,147 +247,109 @@ export component DistroCard inherits Rectangle {
         duration: 200ms;
         easing: ease-out-quad;
     }
-    property <bool> is_icon_hovered: icon_touch.has-hover;
     VerticalLayout {
         padding: 0px;
-        HorizontalLayout {
+        
+        // Main row: Revert to physical spring layout, avoid top-level centering
+        Rectangle {
             height: 48px;
-            padding-left: 12px;
-            padding-right: 8px;
-            spacing: 0px;
-            alignment: space-between;
             HorizontalLayout {
-                spacing: 8px;
-                alignment: start;
-                ActionIcon {
-                    y: (parent.height - 28px) / 2;
-                    icon: (distro.status == "Running") ? "\u{E769}" : "\u{E768}";
-                    is_font_icon: true;
-                    tooltip: (distro.status == "Running") ? AppI18n.t("distro.stop", [AppI18n.version]) : AppI18n.t("distro.start", [AppI18n.version]);
-                    clicked => {
-                        if (distro.status == "Running") {
-                            root.stop_clicked();
-                        } else {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 0px; // Use Spacer to control spacing
+
+                // --- RTL branch: Icons on left, text on right ---
+                if (AppI18n.is-rtl): QuickActionIcons {
+                    expanded: root.expanded;
+                    terminal => {
+                        root.terminal_clicked();
+                    }
+                    vscode => {
+                        root.vscode_clicked();
+                    }
+                    folder => {
+                        root.folder_clicked();
+                    }
+                    expand => {
+                        root.expand_clicked();
+                    }
+                }
+                if (AppI18n.is-rtl): Rectangle {
+                    horizontal-stretch: 1;
+                } // Middle spring
+                if (AppI18n.is-rtl): HorizontalLayout {
+                    spacing: 8px;
+                    DistroInfo {
+                        distro: root.distro;
+                        is-rtl: true;
+                    }
+
+                    DistroBadge {
+                        distro: root.distro;
+                    }
+
+                    StartStopButton {
+                        distro: root.distro;
+                        start => {
                             root.start_clicked();
                         }
-                    }
-                }
-
-                Rectangle {
-                    width: 28px;
-                    height: 48px;
-                    background: transparent;
-                    icon_touch := TouchArea {
-                        width: 28px;
-                        height: 28px;
-                        y: (parent.height - self.height) / 2;
-                    }
-
-                    if (distro.has_icon): Rectangle {
-                        width: 28px;
-                        height: 28px;
-                        background: transparent;
-                        y: (parent.height - self.height) / 2;
-                        Image {
-                            width: 22px;
-                            height: 22px;
-                            x: (parent.width - self.width) / 2;
-                            y: (parent.height - self.height) / 2;
-                            source: distro.icon;
-                            image-fit: contain;
-                        }
-                    }
-                    if (!distro.has_icon): Rectangle {
-                        width: 28px;
-                        height: 28px;
-                        background: #0078D4;
-                        border-radius: 4px;
-                        y: (parent.height - self.height) / 2;
-                        Text {
-                            text: distro.initial;
-                            color: white;
-                            font-size: 16px;
-                            font-weight: 500;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                            overflow: elide;
+                        stop => {
+                            root.stop_clicked();
                         }
                     }
                 }
 
-                VerticalLayout {
-                    alignment: center;
-                    spacing: 0px;
-                    y: (parent.height - self.height) / 2;
-                    Text {
-                        text: distro.name;
-                        font-size: 14px;
-                        font-family: Theme.default_font;
-                        font-weight: 600;
-                        color: Theme.text_primary;
+                // --- LTR branch: Text on left, icons on right ---
+                if (!AppI18n.is-rtl): HorizontalLayout {
+                    spacing: 8px;
+                    StartStopButton {
+                        distro: root.distro;
+                        start => {
+                            root.start_clicked();
+                        }
+                        stop => {
+                            root.stop_clicked();
+                        }
                     }
 
-                    Text {
-                        text: (distro.status == "Running") ? AppI18n.t("distro.running", [AppI18n.version]) : AppI18n.t("distro.stopped", [AppI18n.version]);
-                        font-size: 11px;
-                        color: Theme.text_secondary;
+                    DistroBadge {
+                        distro: root.distro;
+                    }
+
+                    DistroInfo {
+                        distro: root.distro;
+                        is-rtl: false;
                     }
                 }
-            }
-
-            HorizontalLayout {
-                spacing: 8px;
-                alignment: end;
-                HorizontalLayout {
-                    spacing: 4px;
-                    y: (parent.height - 28px) / 2;
-                    ActionIcon {
-                        icon: "\u{E756}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.terminal", [AppI18n.version]);
-                        clicked => {
-                            root.terminal_clicked();
-                        }
+                if (!AppI18n.is-rtl): Rectangle {
+                    horizontal-stretch: 1;
+                } // Middle spring
+                if (!AppI18n.is-rtl): QuickActionIcons {
+                    expanded: root.expanded;
+                    terminal => {
+                        root.terminal_clicked();
                     }
-
-                    ActionIcon {
-                        icon: "\u{E70B}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.vscode", [AppI18n.version]);
-                        clicked => {
-                            root.vscode_clicked();
-                        }
+                    vscode => {
+                        root.vscode_clicked();
                     }
-
-                    ActionIcon {
-                        icon: "\u{E8B7}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.explorer", [AppI18n.version]);
-                        clicked => {
-                            root.folder_clicked();
-                        }
+                    folder => {
+                        root.folder_clicked();
                     }
-                }
-
-                ActionIcon {
-                    y: (parent.height - self.height) / 2;
-                    icon: expanded ? "\u{E70E}" : "\u{E70D}";
-                    is_font_icon: true;
-                    tooltip: expanded ? AppI18n.t("distro.collapse", [AppI18n.version]) : AppI18n.t("distro.expand", [AppI18n.version]);
-                    clicked => {
-                        root.expanded = !root.expanded;
+                    expand => {
+                        root.expand_clicked();
                     }
                 }
             }
         }
 
-        if (expanded): Rectangle {
-            background: transparent;
+        // Expansion area
+        Rectangle {
+            opacity: root.expanded ? 1 : 0;
+            visible: root.expanded;
             height: 48px;
-            clip: true;
             Rectangle {
                 y: -1px;
-                width: parent.width;
+                width: 100%;
                 height: parent.height + 1px;
                 background: Theme.dark_mode ? #252526 : #F9FAFB;
                 border-bottom-left-radius: 6px;
@@ -180,99 +359,61 @@ export component DistroCard inherits Rectangle {
                 HorizontalLayout {
                     padding-left: 12px;
                     padding-right: 12px;
-                    spacing: 12px;
-                    alignment: end;
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E7B3}"; // Hard Drive icon (Legacy)
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.information", [AppI18n.version]);
-                        clicked => {
+                    
+                    // RTL icons aligned to the visual left
+                    if (AppI18n.is-rtl): ExpandedActionIcons {
+                        information => {
                             root.information_clicked();
                         }
-                    }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E777}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.restart", [AppI18n.version]);
-                        clicked => {
+                        restart => {
                             root.restart_clicked();
                         }
-                    }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{EDE1}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.export", [AppI18n.version]);
-                        clicked => {
+                        export_distro => {
                             root.export_clicked();
                         }
-                    }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E8DE}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.move", [AppI18n.version]);
-                        clicked => {
-                            root.move_clicked();
-                        }
-                    }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E8C8}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.clone", [AppI18n.version]);
-                        clicked => {
+                        clone => {
                             root.clone_clicked();
                         }
-                    }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E74D}";
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("distro.delete", [AppI18n.version]);
-                        clicked => {
+                        move_distro => {
+                            root.move_clicked();
+                        }
+                        delete_distro => {
                             root.delete_clicked();
                         }
+                        settings => {
+                            root.settings_clicked();
+                        }
                     }
-
-                    ActionIcon {
-                        y: (parent.height - self.height) / 2;
-                        icon: "\u{E713}"; // Settings icon
-                        is_font_icon: true;
-                        tooltip: AppI18n.t("sidebar.settings", [AppI18n.version]);
-                        clicked => {
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+                    
+                    // LTR icons aligned to the visual right
+                    if (!AppI18n.is-rtl): ExpandedActionIcons {
+                        information => {
+                            root.information_clicked();
+                        }
+                        restart => {
+                            root.restart_clicked();
+                        }
+                        export_distro => {
+                            root.export_clicked();
+                        }
+                        clone => {
+                            root.clone_clicked();
+                        }
+                        move_distro => {
+                            root.move_clicked();
+                        }
+                        delete_distro => {
+                            root.delete_clicked();
+                        }
+                        settings => {
                             root.settings_clicked();
                         }
                     }
                 }
             }
-        }
-    }
-
-    if (is_icon_hovered && distro.distro_display_name != ""): Rectangle {
-        z: 1000;
-        x: 44px;
-        y: (48px - self.height) / 2;
-        width: tooltip_text.preferred-width + 16px;
-        height: 28px;
-        border-radius: 6px;
-        border-width: 1px;
-        background: Theme.dark_mode ? #2D2D30 : #FFFFFF;
-        border-color: Theme.border_color;
-        tooltip_text := Text {
-            text: distro.distro_display_name;
-            color: Theme.text_primary;
-            font-size: 12px;
-            font-weight: 500;
-            horizontal-alignment: center;
-            vertical-alignment: center;
         }
     }
 }

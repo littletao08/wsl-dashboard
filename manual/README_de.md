@@ -1,22 +1,103 @@
 # WSL Dashboard
 
 <p align="center">
-  <img src="../assets/logo/logo.png" width="128" height="128" />
+  <img src="../assets/logo/logo.png" width="128" height="128" alt="WSL Dashboard Logo" />
 </p>
-
----
 
 Ein modernes, leistungsstarkes und leichtgewichtiges Dashboard zur Verwaltung von WSL-Instanzen (Windows Subsystem for Linux). Entwickelt mit Rust und Slint für ein erstklassiges natives Erlebnis.
 
 ---
 
-[![Rust](https://img.shields.io/badge/rust-v1.92+-orange.svg)](https://www.rust-lang.org)
-[![Slint](https://img.shields.io/badge/UI-Slint-blue.svg)](https://slint.dev)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+<p align="left">
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-v1.92+-orange.svg" alt="Rust" /></a>
+  <a href="https://slint.dev"><img src="https://img.shields.io/badge/UI-Slint-blue.svg" alt="Slint" /></a>
+  <a href="https://tokio.rs"><img src="https://img.shields.io/badge/Async-Tokio-000000.svg" alt="Tokio" /></a>
+  <a href="https://github.com/microsoft/windows-rs"><img src="https://img.shields.io/badge/OS-Windows-0078D6.svg" alt="Windows" /></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License" /></a>
+</p>
 
-I18N: [简体中文](./README_zh_CN.md) | [繁體中文](./README_zh_TW.md) | [English](../README.md) | [日本語](./README_ja.md) | [Français](./README_fr.md) | [Español](./README_es.md) | [Русский](./README_ru.md) | [Português](./README_pt.md) | Deutsch | [Italiano](./README_it.md) | [Türkçe](./README_tr.md) | [Bahasa Indonesia](./README_id.md) | [हिन्दी](./README_hi.md) | [বাংলা](./README_bn.md)
+I18N :  [English](../README.md) | [简体中文](./README_zh_CN.md) | [繁體中文](./README_zh_TW.md) | [हिन्दी](./README_hi.md) | [Español](./README_es.md) | [Français](./README_fr.md) | [العربية](./README_ar.md) | [বাংলা](./README_bn.md) | [Português](./README_pt.md) | [Русский](./README_ru.md) | [اردو](./README_ur.md) | [Bahasa Indonesia](./README_id.md) | Deutsch | [日本語](./README_ja.md) | [Türkçe](./README_tr.md) | [한국어](./README_ko.md) | [Italiano](./README_it.md) | [Nederlands](./README_nl.md) | [Svenska](./README_sv.md) | [Čeština](./README_cs.md) | [Ελληνικά](./README_el.md) | [Magyar](./README_hu.md) | [עברית](./README_he.md) | [Norsk](./README_no.md) | [Dansk](./README_da.md) | [Suomi](./README_fi.md) | [Slovenčina](./README_sk.md) | [Slovenščina](./README_sl.md) | [Íslenska](./README_is.md)
 
 ---
+
+## 📑 Inhaltsverzeichnis
+- [🌍 Sprachunterstützung](#-sprachunterstützung)
+- [🚀 Hauptmerkmale & Nutzung](#-hauptmerkmale--nutzung)
+- [⚙️ Konfiguration & Protokolle](#️-konfiguration--protokolle)
+- [🖼️ Screenshots](#️-screenshots)
+- [🎬 Bedienungs-Demo](#-bedienungs-demo)
+- [💻 Systemvoraussetzungen](#-systemvoraussetzungen)
+- [📦 Installationsanleitung](#-installationsanleitung)
+- [🛠️ Tech Stack & Leistung](#️-tech-stack--leistung)
+- [📄 Lizenz](#-lizenz)
+
+---
+
+## 🌍 Sprachunterstützung
+
+Englisch, Chinesisch (Vereinfacht), Chinesisch (Traditionell), Hindi, Spanisch, Französisch, Arabisch, Bengalisch, Portugiesisch, Russisch, Urdu, Indonesisch, Deutsch, Japanisch, Türkisch, Koreanisch, Italienisch, Niederländisch, Schwedisch, Tschechisch, Griechisch, Ungarisch, Hebräisch, Norwegisch, Dänisch, Finnisch, Slowakisch, Slowenisch, Isländisch
+
+<p align="left">
+  <img src="../assets/flags/us.svg" width="32" title="Englisch" alt="Englisch" />
+  <img src="../assets/flags/cn.svg" width="32" title="Chinesisch (Vereinfacht)" alt="Chinesisch (Vereinfacht)" />
+  <img src="../assets/flags/tw.svg" width="32" title="Chinesisch (Traditionell)" alt="Chinesisch (Traditionell)" />
+  <img src="../assets/flags/in.svg" width="32" title="Hindi" alt="Hindi" />
+  <img src="../assets/flags/es.svg" width="32" title="Spanisch" alt="Spanisch" />
+  <img src="../assets/flags/fr.svg" width="32" title="Französisch" alt="Französisch" />
+  <img src="../assets/flags/sa.svg" width="32" title="Arabisch" alt="Arabisch" />
+  <img src="../assets/flags/bd.svg" width="32" title="Bengalisch" alt="Bengalisch" />
+  <img src="../assets/flags/pt.svg" width="32" title="Portugiesisch" alt="Portugiesisch" />
+  <img src="../assets/flags/ru.svg" width="32" title="Russisch" alt="Russisch" />
+  <img src="../assets/flags/pk.svg" width="32" title="Urdu" alt="Urdu" />
+  <img src="../assets/flags/id.svg" width="32" title="Indonesisch" alt="Indonesisch" />
+  <img src="../assets/flags/de.svg" width="32" title="Deutsch" alt="Deutsch" />
+  <img src="../assets/flags/jp.svg" width="32" title="Japanisch" alt="Japanisch" />
+  <img src="../assets/flags/tr.svg" width="32" title="Türkisch" alt="Türkisch" />
+  <img src="../assets/flags/kr.svg" width="32" title="Koreanisch" alt="Koreanisch" />
+  <img src="../assets/flags/it.svg" width="32" title="Italienisch" alt="Italienisch" />
+  <img src="../assets/flags/nl.svg" width="32" title="Niederländisch" alt="Niederländisch" />
+  <img src="../assets/flags/se.svg" width="32" title="Schwedisch" alt="Schwedisch" />
+  <img src="../assets/flags/cz.svg" width="32" title="Tschechisch" alt="Tschechisch" />
+  <img src="../assets/flags/gr.svg" width="32" title="Griechisch" alt="Griechisch" />
+  <img src="../assets/flags/hu.svg" width="32" title="Ungarisch" alt="Ungarisch" />
+  <img src="../assets/flags/il.svg" width="32" title="Hebräisch" alt="Hebräisch" />
+  <img src="../assets/flags/no.svg" width="32" title="Norwegisch" alt="Norwegisch" />
+  <img src="../assets/flags/dk.svg" width="32" title="Dänisch" alt="Dänisch" />
+  <img src="../assets/flags/fi.svg" width="32" title="Finnisch" alt="Finnisch" />
+  <img src="../assets/flags/sk.svg" width="32" title="Slowakisch" alt="Slowakisch" />
+  <img src="../assets/flags/si.svg" width="32" title="Slowenisch" alt="Slowenisch" />
+  <img src="../assets/flags/is.svg" width="32" title="Isländisch" alt="Isländisch" />
+</p>
+
+
+## 🚀 Hauptmerkmale & Nutzung
+
+- **Moderne native UI**: Intuitive Benutzeroberfläche mit Unterstützung für Hell-/Dunkelmodus, flüssigen Animationen und leistungsstarkem Rendering durch **Skia**.
+- **System-Tray-Integration**: Volle Unterstützung für die Minimierung in den Infobereich (~10MB RAM-Verbrauch), Doppelklick zum Umschalten und ein funktionales Kontextmenü.
+- **Intelligenter Autostart**: Dashboard mit Windows starten, minimiert im Tray (Silent-Modus mit `/silent`) und automatisches Herunterfahren der Distributionen beim Beenden.
+- **Umfassende Instanzverwaltung**: Ein-Klick-Start, Stopp, Beenden und Deregistrieren. Echtzeit-Statusüberwachung und detaillierte Einblicke in Speichernutzung und Dateipfade.
+- **Distributions-Management**: Als Standard festlegen, Migration (VHDX auf andere Laufwerke verschieben) sowie Export/Klonen in `.tar` oder `.tar.gz`.
+- **Schnelle Integration**: Sofortiger Start von Terminal, VS Code oder Datei-Explorer mit anpassbaren Arbeitsverzeichnissen und Startup-Skript-Hooks.
+- **Smarte Installation**: Installation aus dem Microsoft Store, von GitHub oder lokalen Dateien (RootFS/VHDX). Integrierter RootFS-Download-Assistent.
+- **Globale Sicherheit**: Mutex-Sperren für sichere gleichzeitige Migrations-/Backup-Vorgänge und automatische Appx-Bereinigung beim Entfernen.
+- **Ultra-niedriger Speicherverbrauch**: Hochgradig auf Effizienz optimiert. Silent-Start (System Tray) verbraucht nur **~10MB** RAM. Der Verbrauch im Fenstermodus variiert nach Schriftkomplexität: **~18MB** für Standardsprachen (Englisch, Deutsch, Spanisch usw.) und **~38MB** für Sprachen mit großen Zeichensätzen (Chinesisch, Japanisch, Koreanisch).
+
+
+## ⚙️ Konfiguration & Protokolle
+
+Die gesamte Konfiguration wird über die Einstellungsansicht verwaltet:
+
+- Wählen Sie das Standard-Installationsverzeichnis für neue WSL-Instanzen.
+- Konfigurieren Sie das Protokollverzeichnis und die Protokollstufe (Error / Warn / Info / Debug / Trace).
+- Wählen Sie die UI-Sprache oder lassen Sie sie der Systemsprache folgen.
+- Schalten Sie den Dunkelmodus um und legen Sie fest, ob die App WSL nach Vorgängen automatisch herunterfahren kann.
+- Konfigurieren Sie, wie oft die App nach Updates sucht (täglich, wöchentlich, zweiwöchentlich, monatlich).
+- Aktivieren Sie den automatischen Start beim Systemboot (mit automatischer Pfadreparatur).
+- Stellen Sie die App so ein, dass sie beim Start in den System-Tray minimiert wird.
+- Konfigurieren Sie die Schließen-Schaltfläche so, dass sie in den Tray minimiert wird, anstatt das Programm zu beenden.
+
+Protokolldateien werden in das konfigurierte Protokollverzeichnis geschrieben und können bei der Meldung von Problemen angehängt werden.
+
 
 ## 🖼️ Screenshots
 
@@ -44,27 +125,15 @@ Hier ist eine Demonstration des WSL Dashboards in Aktion:
 
 ![WSL Dashboard Demo](../assets/screenshot/demo.gif)
 
-## 🚀 Hauptmerkmale
 
-- Intuitive Benutzeroberfläche mit Unterstützung für den Dunkelmodus und flüssigen Animationen.
-- Ein-Klick-Verwaltung für alle Ihre WSL-Distributionen (Starten, Stoppen, Beenden, Deregistrieren).
-- Schneller Zugriff auf Distributions-Terminals, VS Code und den Datei-Explorer.
-- Umfassende Distributions-Einstellungen: Als Standard festlegen, automatischer Start beim Booten und benutzerdefinierte Verzeichnispfade.
-- Echtzeit-Statusüberwachung und -anzeige der WSL-Instanzen.
-- Export und Backup in `.tar`- oder komprimierte `.tar.gz`-Archive.
-- Import und Klonen von Instanzen aus Backups oder bestehenden Distributionen.
-- Distribution in ein beliebiges angegebenes Verzeichnis verschieben (VHDX-Migration), um Platz auf Laufwerk C: zu sparen.
-- Intelligente Installation von Distributionen aus dem Microsoft Store oder von GitHub.
-- Integrierter RootFS-Download-Assistent für manuelle Installationen.
-- Detaillierte Einblicke in den VHDX-Dateispeicherort, die Größe des virtuellen Datenträgers und die tatsächliche Festplattenbelegung.
 
-## Systemvoraussetzungen
+## 💻 Systemvoraussetzungen
 
 - Windows 10 oder Windows 11 mit aktiviertem WSL (WSL 2 empfohlen).
 - Mindestens eine installierte WSL-Distribution oder die Berechtigung, neue zu installieren.
 - 64-Bit-CPU; 4 GB RAM oder mehr empfohlen für reibungslose Nutzung mehrerer Distributionen.
 
-## 📦 Installation
+## 📦 Installationsanleitung
 
 ### Option 1: Vorkompilierte Binärdatei herunterladen
 
@@ -94,77 +163,30 @@ Stellen Sie sicher, dass Sie die Rust-Toolchain (Rust 1.92+ oder neuer) installi
      ```powershell
      cargo run
      ```
+   - Optimierten Release-Build mit dem Build-Skript erstellen:
 
-   - Optimierter Release-Build:
-
-     ```powershell
-     cargo run --release
-     ```
-
-   - Verwendung des Build-Skripts (empfohlen für Release-Binärdateien):
-
-     > Das Build-Skript erfordert die `x86_64-pc-windows-gnu` Toolchain.
+     > Das Build-Skript erfordert die `x86_64-pc-windows-msvc` Toolchain.
 
      ```powershell
      .\build\scripts\build.ps1
      ```
 
-## 🧭 Nutzungsübersicht
-
-- **Vorhandene Distributionen verwalten**: Starten, Stoppen, Beenden, Deregistrieren oder als Standard-Distribution festlegen aus der Hauptansicht.
-- **Distributionen konfigurieren**: Autostart-Verhalten festlegen und Startverzeichnisse für Terminal/VS Code anpassen.
-- **Werkzeuge schnell öffnen**: Starten Sie eine Distribution in Ihrem Terminal, in VS Code oder im Datei-Explorer mit einem einzigen Klick.
-- **Neue Instanzen erstellen**: Verwenden Sie die Ansicht „Instanz hinzufügen“, um aus dem Microsoft Store zu installieren, RootFS-Images herunterzuladen oder vorhandene Distributionen zu klonen.
-- **Backup und Wiederherstellung**: Exportieren Sie Distributionen in `.tar` / `.tar.gz`-Archive und importieren Sie diese später oder auf einem anderen Rechner.
-- **Distribution verschieben**: Distribution in das angegebene Verzeichnis verschieben für besseres Speichermanagement.
-- **Status überwachen**: Behalten Sie den Echtzeit-Status der Distributionen und die Speichernutzung im Auge, während das WSL Dashboard läuft.
-
-## ⚙️ Konfiguration & Protokolle
-
-Die gesamte Konfiguration wird über die Einstellungsansicht verwaltet:
-
-- Wählen Sie das Standard-Installationsverzeichnis für neue WSL-Instanzen.
-- Konfigurieren Sie das Protokollverzeichnis und die Protokollstufe (Error / Warn / Info / Debug / Trace).
-- Wählen Sie die UI-Sprache oder lassen Sie sie der Systemsprache folgen.
-- Schalten Sie den Dunkelmodus um und legen Sie fest, ob die App WSL nach Vorgängen automatisch herunterfahren kann.
-- Konfigurieren Sie, wie oft die App nach Updates sucht (täglich, wöchentlich, zweiwöchentlich, monatlich).
-
-Protokolldateien werden in das konfigurierte Protokollverzeichnis geschrieben und können bei der Meldung von Problemen angehängt werden.
 
 ## 🛠️ Tech Stack & Leistung
 
 - **Kern**: Implementiert in Rust für Speichersicherheit und Zero-Cost-Abstraktionen.
-- **UI-Framework**: Slint, ein modernes GPU-beschleunigtes UI-Toolkit (Backend: `winit`).
-- **Async-Runtime**: Tokio für hochparallele, nicht blockierende Systembefehle und I/O.
-- **Leistung**:
-  - **Speichernutzung**: In der Regel etwa 60–80 MB RAM.
-  - **Reaktionsfähigkeit**: Nahezu sofortiger Start und Status-Updates in Echtzeit durch Streaming-Technologie.
-  - **Binärgröße**: Optimierter Release-Build erzeugt eine einzige kompakte ausführbare Datei.
+- **UI-Framework**: Slint mit leistungsstarkem **Skia**-Rendering-Backend.
+- **Async-Runtime**: Tokio für nicht blockierende Systembefehle und I/O.
+- **Leistungs-Highlights**:
+  - **Reaktionsfähigkeit**: Nahezu sofortiger Start und Echtzeit-WSL-Statusüberwachung.
+  - **Effizienz**: Ultra-niedriger Ressourcenverbrauch (Details siehe [Hauptmerkmale](#-hauptmerkmale--nutzung)).
+  - **Portabilität**: Optimierter Release-Build erzeugt eine einzige kompakte ausführbare Datei.
 
-## 🌍 Sprachunterstützung
 
-Vollständige Internationalisierung wird für die folgenden Sprachen angeboten:
-
-| Sprache | Code | Emoji |
-| :--- | :---: | :---: |
-| Vereinfachtes Chinesisch | `zh-CN` | 🇨🇳 |
-| Traditionelles Chinesisch | `zh-TW` | 🇭🇰 / 🇹🇼 |
-| Englisch | `en` | 🇺🇸 |
-| Japanisch | `ja` | 🇯🇵 |
-| Französisch | `fr` | 🇫🇷 |
-| Spanisch | `es` | 🇪🇸 |
-| Russisch | `ru` | 🇷🇺 |
-| Portugiesisch | `pt` | 🇵🇹 |
-| Deutsch | `de` | 🇩🇪 |
-| Italienisch | `it` | 🇮🇹 |
-| Türkisch | `tr` | 🇹🇷 |
-| Indonesisch | `id` | 🇮🇩 |
-| Hindi | `hi` | 🇮🇳 |
-| Bengalisch | `bn` | 🇧🇩 |
 
 ## 📄 Lizenz
 
-Dieses Projekt ist unter der GPL-3.0 lizenziert – weitere Details finden Sie in der Datei [LICENSE](LICENSE).
+Dieses Projekt ist unter der GPL-3.0 lizenziert – weitere Details finden Sie in der Datei [LICENSE](../LICENSE).
 
 ---
 

@@ -1,9 +1,16 @@
-import { Theme, AppInfo, AppI18n } from "../theme.slint";
+import {
+    Theme,
+    AppInfo,
+    AppI18n,
+    AboutStrings,
+    LayoutConstants,
+} from "../theme.slint";
 
 export component AboutView inherits VerticalLayout {
+    in property <AboutStrings> strings;
     spacing: 20px;
-    padding-left: 4px;
-    padding-right: 16px;
+    padding-left: AppI18n.is-rtl ? 16px : 4px;
+    padding-right: AppI18n.is-rtl ? 4px : 16px;
     padding-top: 8px;
     padding-bottom: 8px;
     alignment: start;
@@ -20,18 +27,22 @@ export component AboutView inherits VerticalLayout {
             VerticalLayout {
                 spacing: 24px;
                 Text {
-                    text: AppI18n.t("about.title", [AppI18n.version]);
-                    font-size: 14px;
+                    text: root.strings.title;
+                    font-size: 14px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                     font-weight: 500;
                     color: Theme.text_primary;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
                 }
 
                 Text {
-                    text: AppI18n.t("about.description", [AppI18n.version]);
-                    font-size: 14px;
+                    text: root.strings.description;
+                    font-size: 14px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                     color: Theme.text_secondary;
                     wrap: word-wrap;
                     min-height: 80px;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
                 }
             }
 
@@ -45,18 +56,41 @@ export component AboutView inherits VerticalLayout {
                 VerticalLayout {
                     spacing: 6px;
                     Text {
-                        text: AppI18n.t("about.version", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.version;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         font-weight: 500;
                         color: Theme.text_primary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                     }
 
                     HorizontalLayout {
                         spacing: 6px;
-                        alignment: start;
+                        alignment: AppI18n.is-rtl ? end : start;
+
+                        // In RTL, the update message should be on the left of the version number
+                        if (AppI18n.is-rtl && AppInfo.checking_update): Text {
+                            text: "(" + root.strings.check_update + ")";
+                            font-size: 12px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
+                            color: Theme.accent;
+                        }
+                        if (AppI18n.is-rtl && !AppInfo.checking_update && AppInfo.has_update): Text {
+                            text: "(" + AppI18n.t("about.new_version", [AppInfo.latest_version, AppI18n.version]) + ")";
+                            font-size: 12px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
+                            color: #FF4D4F;
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.open_url(AppInfo.release_url);
+                                }
+                            }
+                        }
                         Text {
                             text: "v" + AppInfo.version;
-                            font-size: 13px;
+                            font-size: 13px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
                             color: Theme.text_secondary;
                             TouchArea {
                                 mouse-cursor: pointer;
@@ -66,14 +100,17 @@ export component AboutView inherits VerticalLayout {
                             }
                         }
 
-                        if (AppInfo.checking_update): Text {
-                            text: "(" + AppI18n.t("about.check_update", [AppI18n.version]) + ")";
-                            font-size: 12px;
+                        // In LTR, the update message should be on the right
+                        if (!AppI18n.is-rtl && AppInfo.checking_update): Text {
+                            text: "(" + root.strings.check_update + ")";
+                            font-size: 12px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
                             color: Theme.accent;
                         }
-                        if (!AppInfo.checking_update && AppInfo.has_update): Text {
+                        if (!AppI18n.is-rtl && !AppInfo.checking_update && AppInfo.has_update): Text {
                             text: "(" + AppI18n.t("about.new_version", [AppInfo.latest_version, AppI18n.version]) + ")";
-                            font-size: 12px;
+                            font-size: 12px * LayoutConstants.font-scale;
+                            font-family: Theme.default_font;
                             color: #FF4D4F;
                             TouchArea {
                                 mouse-cursor: pointer;
@@ -88,16 +125,20 @@ export component AboutView inherits VerticalLayout {
                 VerticalLayout {
                     spacing: 6px;
                     Text {
-                        text: AppI18n.t("about.homepage", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.website;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         font-weight: 500;
                         color: Theme.text_primary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                     }
 
                     Text {
                         text: AppInfo.homepage;
-                        font-size: 13px;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: Theme.accent;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                         TouchArea {
                             mouse-cursor: pointer;
                             clicked => {
@@ -110,9 +151,11 @@ export component AboutView inherits VerticalLayout {
                 VerticalLayout {
                     spacing: 6px;
                     Text {
-                        text: AppI18n.t("about.issues", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.issues;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: Theme.text_primary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                         TouchArea {
                             mouse-cursor: pointer;
                             clicked => {
@@ -125,9 +168,11 @@ export component AboutView inherits VerticalLayout {
                 VerticalLayout {
                     spacing: 6px;
                     Text {
-                        text: AppI18n.t("about.discussions", [AppI18n.version]);
-                        font-size: 13px;
+                        text: root.strings.discussions;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         color: Theme.text_primary;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
                         TouchArea {
                             mouse-cursor: pointer;
                             clicked => {

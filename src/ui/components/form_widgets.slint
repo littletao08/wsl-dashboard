@@ -1,4 +1,4 @@
-import { Theme } from "../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../theme.slint";
 import { CustomScrollbar } from "./scrollbar.slint";
 
 export component CustomLineEdit inherits Rectangle {
@@ -12,12 +12,15 @@ export component CustomLineEdit inherits Rectangle {
     border-color: input-focus.has-focus ? Theme.accent : Theme.input_border;
     border-radius: 4px;
     HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
+        padding-left: 15px;
+        padding-right: 15px;
         input-focus := TextInput {
             text <=> root.text;
             color: Theme.text_primary;
+            font-family: Theme.default_font;
+            font-size: 13px * LayoutConstants.font-scale;
             vertical-alignment: center;
+            horizontal-alignment: AppI18n.is-rtl ? right : left;
             single-line: true;
             enabled: root.enabled;
             accepted => {
@@ -29,11 +32,14 @@ export component CustomLineEdit inherits Rectangle {
         }
     }
 
-    if (root.text == "" && root.placeholder-text != ""): Text {
+    Text {
         text: root.placeholder-text;
-        color: Theme.text_secondary;
+        color: (root.text == "" && root.placeholder-text != "") ? Theme.text_secondary : transparent;
+        font-family: Theme.default_font;
         vertical-alignment: center;
-        x: 8px;
+        horizontal-alignment: AppI18n.is-rtl ? right : left;
+        x: 15px;
+        width: parent.width - 30px;
     }
 }
 
@@ -42,31 +48,45 @@ export component CustomComboBox inherits Rectangle {
     in-out property <int> current-index;
     in-out property <bool> open-dropdown: false;
     in property <length> dropdown-height: 160px;
+    in property <bool> enabled: true;
     callback selected(int);
     height: 32px;
+    opacity: root.enabled ? 1.0 : 0.6;
     
     // Main Box
     Rectangle {
-        background: Theme.input_bg;
+        background: root.enabled ? Theme.input_bg : Theme.hover_bg;
         border-width: 1px;
-        border-color: Theme.input_border;
+        border-color: root.enabled ? Theme.input_border : Theme.border_color;
         border-radius: 4px;
         width: 100%;
         height: 100%;
         HorizontalLayout {
-            padding-left: 8px;
-            padding-right: 8px;
+            padding-left: 15px;
+            padding-right: 15px;
             alignment: space-between;
+            
+            // RTL: Arrow left, Text right
+            if (AppI18n.is-rtl): Text {
+                text: "▼";
+                color: Theme.text_secondary;
+                vertical-alignment: center;
+                font-size: 10px;
+            }
             Text {
                 text: root.model[root.current-index];
                 color: Theme.text_primary;
+                font-family: Theme.default_font;
+                font-size: 13px * LayoutConstants.font-scale;
                 vertical-alignment: center;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
                 horizontal-stretch: 1;
                 overflow: elide;
                 min-width: 0;
             }
 
-            Text {
+            // LTR: Text left, Arrow right
+            if (!AppI18n.is-rtl): Text {
                 text: "▼";
                 color: Theme.text_secondary;
                 vertical-alignment: center;
@@ -75,6 +95,7 @@ export component CustomComboBox inherits Rectangle {
         }
 
         TouchArea {
+            enabled: root.enabled;
             clicked => {
                 root.open-dropdown = !root.open-dropdown;
             }
@@ -120,8 +141,12 @@ export component CustomComboBox inherits Rectangle {
                     Text {
                         text: item;
                         color: Theme.text_primary;
+                        font-family: Theme.default_font;
+                        font-size: 13px * LayoutConstants.font-scale;
                         vertical-alignment: center;
-                        x: 8px;
+                        horizontal-alignment: AppI18n.is-rtl ? right : left;
+                        x: AppI18n.is-rtl ? 0 : 15px;
+                        width: AppI18n.is-rtl ? parent.width - 15px : parent.width - 30px;
                     }
                 }
             }
@@ -129,9 +154,9 @@ export component CustomComboBox inherits Rectangle {
 
         // Scrollbar - connected to flick
         if (flick.viewport-height > self.height - 2px): CustomScrollbar {
-            x: parent.width - 10px;
+            x: AppI18n.is-rtl ? 2px : parent.width - 8px;
             y: 1px;
-            width: 8px;
+            width: 6px;
             height: parent.height - 2px;
             maximum: flick.viewport-height - flick.height;
             page_size: flick.height;
@@ -153,9 +178,10 @@ export component CustomCheckBox inherits Rectangle {
     opacity: root.enabled ? 1.0 : 0.5;
     HorizontalLayout {
         spacing: 12px;
+        alignment: AppI18n.is-rtl ? end : start;
 
         // Check Box Container
-        Rectangle {
+        if (!AppI18n.is-rtl): Rectangle {
             width: 18px;
             height: 18px;
             y: (parent.height - self.height) / 2;
@@ -165,26 +191,58 @@ export component CustomCheckBox inherits Rectangle {
             border-radius: 3px;
 
             // Checkmark
-            if (root.checked): Text {
-                text: "✔";
-                color: #FFFFFF;
-                font-size: 13px;
-                font-weight: 400;
+            // Checkmark using Path for better performance and check without font issues
+            Path {
                 width: 100%;
                 height: 100%;
-                horizontal-alignment: center;
-                vertical-alignment: center;
+                // Simple checkmark path centered in 18x18 box
+                commands: "M 4 9 L 7 12 L 14 5";
+                stroke: #FFFFFF;
+                stroke-width: 1.5px;
+                opacity: root.checked ? 1 : 0;
             }
+        }
+        if (AppI18n.is-rtl): Text {
+            text: root.text;
+            font-size: 13px * LayoutConstants.font-scale;
+            font-family: Theme.default_font;
+            color: Theme.text_primary;
+            vertical-alignment: center;
+            horizontal-alignment: right;
+            wrap: word-wrap;
+            horizontal-stretch: 1;
         }
 
         // Label
-        Text {
+        if (!AppI18n.is-rtl): Text {
             text: root.text;
-            font-size: 13px;
+            font-size: 13px * LayoutConstants.font-scale;
+            font-family: Theme.default_font;
             color: Theme.text_primary;
             vertical-alignment: center;
             wrap: word-wrap;
             horizontal-stretch: 1;
+        }
+        if (AppI18n.is-rtl): Rectangle {
+            width: 18px;
+            height: 18px;
+            y: (parent.height - self.height) / 2;
+            border-width: 1px;
+            border-color: root.checked ? Theme.accent : Theme.input_border;
+            background: root.checked ? Theme.accent : Theme.input_bg;
+            border-radius: 3px;
+
+            // Checkmark
+            // Checkmark using Path for better performance and check without font issues
+            Path {
+                width: 100%;
+                height: 100%;
+                // Simple checkmark path centered in 18x18 box
+                commands: "M 4 9 L 7 12 L 14 5";
+                stroke: #FFFFFF;
+                stroke-width: 1.5px;
+                opacity: root.checked ? 1 : 0;
+            }
         }
     }
 
@@ -208,11 +266,13 @@ export component CustomButton inherits Rectangle {
     border-color: Theme.input_border;
     opacity: root.enabled ? 1.0 : 0.6;
     HorizontalLayout {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: 15px;
+        padding-right: 15px;
         Text {
             text: root.text;
             color: root.primary ? #FFFFFF : Theme.text_primary;
+            font-family: Theme.default_font;
+            font-size: 13px * LayoutConstants.font-scale;
             vertical-alignment: center;
             horizontal-alignment: center;
         }

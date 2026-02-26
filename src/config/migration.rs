@@ -47,6 +47,18 @@ pub fn migrate_config(config: &mut Config) {
         config.settings.check_update = 7;
     }
 
+    // v2 -> v3 logic
+    if old_version < 3 {
+        info!("Upgrading to v3: adding [tray] close-to-tray");
+        config.tray.close_to_tray = true;
+    }
+
+    // v3 -> v4 logic
+    if old_version < 4 {
+        info!("Upgrading to v4: adding [settings] sidebar-collapsed");
+        config.settings.sidebar_collapsed = false;
+    }
+
     config.application.setting_version = SETTINGS_VERSION as u8;
     info!("✅ Configuration migration complete, current version: v{}", SETTINGS_VERSION);
 }

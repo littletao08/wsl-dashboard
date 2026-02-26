@@ -1,5 +1,5 @@
-import { Button } from "std-widgets.slint";
-import { Theme, AppI18n } from "../../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../../theme.slint";
+import { CustomButton } from "../form_widgets.slint";
 
 export component StoreInstallWarnDialog inherits Rectangle {
     callback confirm;
@@ -21,16 +21,20 @@ export component StoreInstallWarnDialog inherits Rectangle {
             spacing: 16px;
             Text {
                 text: AppI18n.t("dialog.store_warn_title", [AppI18n.version]);
-                font-size: 18px;
+                font-size: 18px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 font-weight: 500;
                 color: Theme.text_primary;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
 
             Text {
                 text: AppI18n.t("dialog.store_warn_msg", [AppI18n.version]);
-                font-size: 14px;
+                font-size: 14px * LayoutConstants.font-scale;
+                font-family: Theme.default_font;
                 color: Theme.text_primary;
                 wrap: word-wrap;
+                horizontal-alignment: AppI18n.is-rtl ? right : left;
             }
 
             Rectangle {
@@ -38,9 +42,17 @@ export component StoreInstallWarnDialog inherits Rectangle {
             }
 
             HorizontalLayout {
-                alignment: end;
+                alignment: AppI18n.is-rtl ? start : end;
                 spacing: 12px;
-                Button {
+                if (AppI18n.is-rtl): CustomButton {
+                    text: AppI18n.t("dialog.store_continue", [AppI18n.version]);
+                    height: 32px;
+                    primary: true;
+                    clicked => {
+                        root.confirm();
+                    }
+                }
+                CustomButton {
                     text: AppI18n.t("dialog.store_exit", [AppI18n.version]);
                     height: 32px;
                     clicked => {
@@ -48,7 +60,7 @@ export component StoreInstallWarnDialog inherits Rectangle {
                     }
                 }
 
-                Button {
+                if (!AppI18n.is-rtl): CustomButton {
                     text: AppI18n.t("dialog.store_continue", [AppI18n.version]);
                     height: 32px;
                     primary: true;

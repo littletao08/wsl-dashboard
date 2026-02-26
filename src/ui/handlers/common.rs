@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::{AppWindow, AppState};
+use tracing::debug;
 
 pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     let ah = app_handle.clone();
@@ -33,6 +34,24 @@ pub fn setup(app: &AppWindow, app_handle: slint::Weak<AppWindow>, app_state: Arc
                     }
                 }).unwrap();
             }
+        }
+    });
+
+    let ah = app_handle.clone();
+    let as_ptr = app_state.clone();
+    app.on_save_sidebar_state(move || {
+        if let Some(app) = ah.upgrade() {
+            let collapsed = app.get_sidebar_collapsed();
+            let as_ptr = as_ptr.clone();
+            debug!("Saving sidebar state: {}", collapsed);
+            tokio::spawn(async move {
+                let mut state = as_ptr.lock().await;
+                let mut settings = state.config_manager.get_settings().clone();
+                if settings.sidebar_collapsed != collapsed {
+                    settings.sidebar_collapsed = collapsed;
+                    let _ = state.config_manager.update_settings(settings);
+                }
+            });
         }
     });
 

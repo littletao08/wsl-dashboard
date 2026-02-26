@@ -1,4 +1,4 @@
-import { Theme, AppI18n } from "../theme.slint";
+import { Theme, AppI18n, LayoutConstants } from "../theme.slint";
 
 export component TaskStatusToast inherits Rectangle {
     in property <string> text;
@@ -19,12 +19,53 @@ export component TaskStatusToast inherits Rectangle {
     animate opacity { duration: 250ms; }
     opacity: is_shown ? 1 : 0;
     layout := HorizontalLayout {
-        padding-left: 20px;
-        padding-right: 12px;
+        padding-left: AppI18n.is-rtl ? 12px : 20px;
+        padding-right: AppI18n.is-rtl ? 20px : 12px;
         spacing: 16px;
         
-        // Progress Spinner (Icon/Speaker)
-        VerticalLayout {
+        // RTL: Close Button first
+        if (AppI18n.is-rtl): VerticalLayout {
+            alignment: center;
+            TouchArea {
+                width: 32px;
+                height: 32px;
+                clicked => {
+                    root.close();
+                }
+                Text {
+                    text: "\u{E10A}"; // Close icon
+                    font-family: Theme.icon_font;
+                    font-size: 14px;
+                    color: parent.has-hover ? Theme.accent : Theme.text_secondary;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        if (AppI18n.is-rtl): Rectangle { } // Spacer for RTL
+
+        // Icon (Progress Spinner / Speaker)
+        if (!AppI18n.is-rtl): VerticalLayout {
+            alignment: center;
+            Text {
+                text: "\u{E995}"; // Volume/Speaker icon
+                font-family: Theme.icon_font;
+                font-size: 20px;
+                color: Theme.accent;
+            }
+        }
+        Text {
+            text: text;
+            font-size: 14px * LayoutConstants.font-scale;
+            font-family: Theme.default_font;
+            color: Theme.text_primary;
+            vertical-alignment: center;
+            horizontal-alignment: AppI18n.is-rtl ? right : left;
+            horizontal-stretch: 1;
+        }
+
+        // Icon for RTL (at the end)
+        if (AppI18n.is-rtl): VerticalLayout {
             alignment: center;
             Text {
                 text: "\u{E995}"; // Volume/Speaker icon
@@ -34,18 +75,11 @@ export component TaskStatusToast inherits Rectangle {
             }
         }
 
-        Text {
-            text: text;
-            font-size: 14px;
-            color: Theme.text_primary;
-            vertical-alignment: center;
-        }
+        // Spacer for LTR
+        if (!AppI18n.is-rtl): Rectangle { }
 
-        // Spacer to push Close Button to the right
-        Rectangle { }
-
-        // Close Button
-        VerticalLayout {
+        // LTR: Close Button at the end
+        if (!AppI18n.is-rtl): VerticalLayout {
             alignment: center;
             TouchArea {
                 width: 32px;

@@ -1,6 +1,11 @@
-import { Theme, Information, AppI18n } from "../../theme.slint";
-import { CustomLineEdit, CustomCheckBox } from "../form_widgets.slint";
+import {
+    Theme,
+    Information,
+    AppI18n,
+    LayoutConstants,
+} from "../../theme.slint";
 import { CustomScrollbar } from "../scrollbar.slint";
+import { CustomLineEdit, CustomCheckBox } from "../form_widgets.slint";
 
 export component SettingsDialog inherits Rectangle {
     in property <string> distro_name;
@@ -40,15 +45,36 @@ export component SettingsDialog inherits Rectangle {
             // Header
             HorizontalLayout {
                 padding-bottom: 16px;
-                alignment: space-between;
+                if (AppI18n.is-rtl): TouchArea {
+                    width: 24px;
+                    height: 24px;
+                    clicked => {
+                        root.close();
+                    }
+                    Rectangle {
+                        background: parent.has-hover ? Theme.hover_bg : transparent;
+                        border-radius: 4px;
+                        Text {
+                            text: "\u{E8BB}";
+                            font-family: Theme.icon_font;
+                            font-size: 14px;
+                            color: Theme.text_primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
                 Text {
                     text: AppI18n.t("dialog.settings_title", [root.distro_name, AppI18n.version]);
-                    font-size: 18px;
+                    font-size: 18px * LayoutConstants.font-scale;
+                    font-family: Theme.default_font;
                     font-weight: 500;
                     color: Theme.text_primary;
+                    horizontal-alignment: AppI18n.is-rtl ? right : left;
+                    horizontal-stretch: 1;
                 }
 
-                TouchArea {
+                if (!AppI18n.is-rtl): TouchArea {
                     width: 24px;
                     height: 24px;
                     clicked => {
@@ -87,7 +113,8 @@ export component SettingsDialog inherits Rectangle {
                     width: 100%;
                     height: 100%;
                     content-layout := VerticalLayout {
-                        padding-right: 16px;
+                        padding-left: AppI18n.is-rtl ? 16px : 0px;
+                        padding-right: AppI18n.is-rtl ? 0px : 16px;
                         spacing: 16px;
                         alignment: start;
 
@@ -102,8 +129,10 @@ export component SettingsDialog inherits Rectangle {
 
                             if (root.default_error != ""): Text {
                                 text: root.default_error;
-                                font-size: 11px;
+                                font-size: 11px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: #ff3333;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
                         }
 
@@ -118,8 +147,10 @@ export component SettingsDialog inherits Rectangle {
                             spacing: 8px;
                             Text {
                                 text: AppI18n.t("dialog.startup_script_title", [AppI18n.version]);
-                                font-size: 13px;
+                                font-size: 13px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: Theme.text_secondary;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
 
                             CustomLineEdit {
@@ -129,8 +160,10 @@ export component SettingsDialog inherits Rectangle {
 
                             if (root.startup_script_error != ""): Text {
                                 text: root.startup_script_error;
-                                font-size: 11px;
+                                font-size: 11px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: #ff3333;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
                         }
 
@@ -139,8 +172,10 @@ export component SettingsDialog inherits Rectangle {
                             spacing: 8px;
                             Text {
                                 text: AppI18n.t("dialog.terminal_dir", [AppI18n.version]);
-                                font-size: 13px;
+                                font-size: 13px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: Theme.text_secondary;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
 
                             CustomLineEdit {
@@ -150,8 +185,10 @@ export component SettingsDialog inherits Rectangle {
 
                             if (root.terminal_dir_error != ""): Text {
                                 text: root.terminal_dir_error;
-                                font-size: 11px;
+                                font-size: 11px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: #ff3333;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
                         }
 
@@ -160,8 +197,10 @@ export component SettingsDialog inherits Rectangle {
                             spacing: 8px;
                             Text {
                                 text: AppI18n.t("dialog.vscode_dir", [AppI18n.version]);
-                                font-size: 13px;
+                                font-size: 13px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: Theme.text_secondary;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
 
                             CustomLineEdit {
@@ -171,8 +210,10 @@ export component SettingsDialog inherits Rectangle {
 
                             if (root.vscode_dir_error != ""): Text {
                                 text: root.vscode_dir_error;
-                                font-size: 11px;
+                                font-size: 11px * LayoutConstants.font-scale;
+                                font-family: Theme.default_font;
                                 color: #ff3333;
+                                horizontal-alignment: AppI18n.is-rtl ? right : left;
                             }
                         }
 
@@ -184,9 +225,9 @@ export component SettingsDialog inherits Rectangle {
 
                 // Scrollbar
                 if (flick.viewport-height > flick.height): CustomScrollbar {
-                    x: parent.width - 8px;
+                    x: AppI18n.is-rtl ? 0px : parent.width - 8px;
                     y: 0;
-                    width: 6px;
+                    width: 8px;
                     height: 100%;
                     maximum: flick.viewport-height - flick.height;
                     page_size: flick.height;
@@ -203,9 +244,32 @@ export component SettingsDialog inherits Rectangle {
 
             // Footer
             HorizontalLayout {
-                alignment: end;
+                alignment: AppI18n.is-rtl ? start : end;
                 spacing: 12px;
                 
+                // RTL order: Save then Cancel (visual order reversed)
+                if (AppI18n.is-rtl): Rectangle {
+                    width: 90px;
+                    height: 32px;
+                    background: Theme.accent;
+                    border-radius: 6px;
+                    TouchArea {
+                        clicked => {
+                            root.save();
+                        }
+                    }
+
+                    Text {
+                        text: AppI18n.t("dialog.save", [AppI18n.version]);
+                        color: white;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
+                        font-weight: 500;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
                 // Cancel Button
                 Rectangle {
                     width: 90px;
@@ -227,15 +291,16 @@ export component SettingsDialog inherits Rectangle {
                     Text {
                         text: AppI18n.t("dialog.cancel", [AppI18n.version]);
                         color: Theme.text_primary;
-                        font-size: 13px;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         font-weight: 500;
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
                 }
                 
-                // Save Button
-                Rectangle {
+                // LTR order: Cancel then Save
+                if (!AppI18n.is-rtl): Rectangle {
                     width: 90px;
                     height: 32px;
                     background: Theme.accent;
@@ -249,7 +314,8 @@ export component SettingsDialog inherits Rectangle {
                     Text {
                         text: AppI18n.t("dialog.save", [AppI18n.version]);
                         color: white;
-                        font-size: 13px;
+                        font-size: 13px * LayoutConstants.font-scale;
+                        font-family: Theme.default_font;
                         font-weight: 500;
                         horizontal-alignment: center;
                         vertical-alignment: center;

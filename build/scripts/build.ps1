@@ -33,6 +33,9 @@ cargo clean
 Write-Host "Compiling..." -ForegroundColor Yellow
 cargo build --release
 
+# Memory leak check
+# cargo build --release --features dhat-heap
+
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
     Pop-Location
@@ -60,14 +63,6 @@ if (Test-Path $destinationPath) {
 
 Copy-Item -Path $sourcePath -Destination $destinationPath -Force
 
-# Check for UPX and compress if available
-if (Get-Command "upx" -ErrorAction SilentlyContinue) {
-    Write-Host "UPX detected, compressing executable..." -ForegroundColor Yellow
-    upx --best --lzma $destinationPath
-}
-else {
-    Write-Host "Tips: Install UPX to further compress the executable (e.g. 'winget install upx')" -ForegroundColor DarkGray
-}
 
 Pop-Location
 

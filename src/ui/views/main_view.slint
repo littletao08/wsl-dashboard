@@ -1,7 +1,84 @@
 import { CustomScrollbar } from "../components/scrollbar.slint";
-import { ScrollView } from "std-widgets.slint";
-import { Theme, Distro } from "../theme.slint";
+import { Theme, Distro, AppI18n } from "../theme.slint";
 import { DistroCard } from "../components/distro_card.slint";
+
+// Isolated component to hold the Repeater and prevent unnecessary rebuilds
+component DistroList inherits VerticalLayout {
+    in property <[Distro]> distros;
+    in-out property <string> expanded_distro: "";
+    
+    // Callbacks - all must be passed through
+    callback start_distro(string);
+    callback stop_distro(string);
+    callback restart_distro(string);
+    callback terminal_distro(string);
+    callback folder_distro(string);
+    callback vscode_distro(string);
+    callback open_export_dialog(string);
+    callback open_clone_dialog(string);
+    callback open_move_dialog(string);
+    callback edit_bashrc_distro(string);
+    callback information_clicked(string);
+    callback delete_clicked(string);
+    callback settings_clicked(string);
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: AppI18n.is-rtl ? 16px : 4px;
+    padding-right: AppI18n.is-rtl ? 4px : 16px;
+    spacing: 12px;
+    alignment: start;
+    for d in distros: DistroCard {
+        distro: d;
+        sole_distro: distros.length == 1;
+        expanded: root.expanded_distro == d.name;
+        expand_clicked => {
+            if (root.expanded_distro == d.name) {
+                root.expanded_distro = "";
+            } else {
+                root.expanded_distro = d.name;
+            }
+        }
+        start_clicked => {
+            root.start_distro(d.name);
+        }
+        stop_clicked => {
+            root.stop_distro(d.name);
+        }
+        restart_clicked => {
+            root.restart_distro(d.name);
+        }
+        terminal_clicked => {
+            root.terminal_distro(d.name);
+        }
+        folder_clicked => {
+            root.folder_distro(d.name);
+        }
+        vscode_clicked => {
+            root.vscode_distro(d.name);
+        }
+        export_clicked => {
+            root.open_export_dialog(d.name);
+        }
+        clone_clicked => {
+            root.open_clone_dialog(d.name);
+        }
+        move_clicked => {
+            root.open_move_dialog(d.name);
+        }
+        edit_bashrc_clicked => {
+            root.edit_bashrc_distro(d.name);
+        }
+        information_clicked => {
+            root.information_clicked(d.name);
+        }
+        delete_clicked => {
+            root.delete_clicked(d.name);
+        }
+        settings_clicked => {
+            root.settings_clicked(d.name);
+        }
+    }
+}
 
 export component MainView inherits VerticalLayout {
     in property <[Distro]> distros;
@@ -21,72 +98,67 @@ export component MainView inherits VerticalLayout {
     callback settings_clicked(string);
     in-out property <string> distro_to_delete;
     in-out property <bool> show_delete_confirmation;
+    private property <string> expanded_distro: "";
     vertical-stretch: 1;
     spacing: 12px;
     Rectangle {
         vertical-stretch: 1;
         clip: true;
         flick := Flickable {
-            viewport-height: list_layout.preferred-height;
+            viewport-height: distro_list.preferred-height;
             width: parent.width;
             height: 100%;
-            list_layout := VerticalLayout {
-                padding-top: 0px;
-                padding-bottom: 0px;
-                padding-left: 4px; // Extra padding for left border
-                padding-right: 16px; // Space for scrollbar
-                spacing: 12px;
-                alignment: start;
-                for d in distros: DistroCard {
-                    distro: d;
-                    sole_distro: distros.length == 1;
-                    start_clicked => {
-                        root.start_distro(d.name);
-                    }
-                    stop_clicked => {
-                        root.stop_distro(d.name);
-                    }
-                    restart_clicked => {
-                        root.restart_distro(d.name);
-                    }
-                    terminal_clicked => {
-                        root.terminal_distro(d.name);
-                    }
-                    folder_clicked => {
-                        root.folder_distro(d.name);
-                    }
-                    vscode_clicked => {
-                        root.vscode_distro(d.name);
-                    }
-                    export_clicked => {
-                        root.open_export_dialog(d.name);
-                    }
-                    delete_clicked => {
-                        root.delete_clicked(d.name);
-                        root.distro_to_delete = d.name;
-                        root.show_delete_confirmation = true;
-                    }
-                    edit_bashrc_clicked => {
-                        root.edit_bashrc_distro(d.name);
-                    }
-                    clone_clicked => {
-                        root.open_clone_dialog(d.name);
-                    }
-                    move_clicked => {
-                        root.open_move_dialog(d.name);
-                    }
-                    settings_clicked => {
-                        root.settings_clicked(d.name);
-                    }
-                    information_clicked => {
-                        root.information_clicked(d.name);
-                    }
+            distro_list := DistroList {
+                distros: root.distros;
+                expanded_distro <=> root.expanded_distro;
+                start_distro(n) => {
+                    root.start_distro(n);
+                }
+                stop_distro(n) => {
+                    root.stop_distro(n);
+                }
+                restart_distro(n) => {
+                    root.restart_distro(n);
+                }
+                terminal_distro(n) => {
+                    root.terminal_distro(n);
+                }
+                folder_distro(n) => {
+                    root.folder_distro(n);
+                }
+                vscode_distro(n) => {
+                    root.vscode_distro(n);
+                }
+                open_export_dialog(n) => {
+                    root.open_export_dialog(n);
+                }
+                open_clone_dialog(n) => {
+                    root.open_clone_dialog(n);
+                }
+                open_move_dialog(n) => {
+                    root.open_move_dialog(n);
+                }
+                edit_bashrc_distro(n) => {
+                    root.edit_bashrc_distro(n);
+                }
+                information_clicked(n) => {
+                    root.information_clicked(n);
+                }
+                delete_clicked(n) => {
+                    root.delete_clicked(n);
+                    root.distro_to_delete = n;
+                    root.show_delete_confirmation = true;
+                }
+                settings_clicked(n) => {
+                    root.settings_clicked(n);
                 }
             }
         }
 
-        if (flick.viewport-height > flick.height): CustomScrollbar {
-            x: parent.width - 10px;
+        CustomScrollbar {
+            opacity: (flick.viewport-height > flick.height) ? 1 : 0;
+            visible: flick.viewport-height > flick.height;
+            x: AppI18n.is-rtl ? 2px : parent.width - 8px;
             y: 0;
             width: 8px;
             height: 100%;

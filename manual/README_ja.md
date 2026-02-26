@@ -1,20 +1,103 @@
 # WSL Dashboard
 
 <p align="center">
-  <img src="../assets/logo/logo.png" width="128" height="128" />
+  <img src="../assets/logo/logo.png" width="128" height="128" alt="WSL Dashboard Logo" />
 </p>
 
 モダンで高性能、かつ軽量な WSL (Windows Subsystem for Linux) インスタンス管理ダッシュボードです。Rust と Slint で構築され、プレミアムなネイティブ体験を提供します。
 
 ---
 
-[![Rust](https://img.shields.io/badge/rust-v1.92+-orange.svg)](https://www.rust-lang.org)
-[![Slint](https://img.shields.io/badge/UI-Slint-blue.svg)](https://slint.dev)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+<p align="left">
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-v1.92+-orange.svg" alt="Rust" /></a>
+  <a href="https://slint.dev"><img src="https://img.shields.io/badge/UI-Slint-blue.svg" alt="Slint" /></a>
+  <a href="https://tokio.rs"><img src="https://img.shields.io/badge/Async-Tokio-000000.svg" alt="Tokio" /></a>
+  <a href="https://github.com/microsoft/windows-rs"><img src="https://img.shields.io/badge/OS-Windows-0078D6.svg" alt="Windows" /></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License" /></a>
+</p>
 
-I18N: [简体中文](./README_zh_CN.md) | [繁體中文](./README_zh_TW.md) | [English](../README.md) | 日本語 | [Français](./README_fr.md) | [Español](./README_es.md) | [Русский](./README_ru.md) | [Português](./README_pt.md) | [Deutsch](./README_de.md) | [Italiano](./README_it.md) | [Türkçe](./README_tr.md) | [Bahasa Indonesia](./README_id.md) | [हिन्दी](./README_hi.md) | [বাংলা](./README_bn.md)
+I18N :  [English](../README.md) | [简体中文](./README_zh_CN.md) | [繁體中文](./README_zh_TW.md) | [हिन्दी](./README_hi.md) | [Español](./README_es.md) | [Français](./README_fr.md) | [العربية](./README_ar.md) | [বাংলা](./README_bn.md) | [Português](./README_pt.md) | [Русский](./README_ru.md) | [اردو](./README_ur.md) | [Bahasa Indonesia](./README_id.md) | [Deutsch](./README_de.md) | 日本語 | [Türkçe](./README_tr.md) | [한국어](./README_ko.md) | [Italiano](./README_it.md) | [Nederlands](./README_nl.md) | [Svenska](./README_sv.md) | [Čeština](./README_cs.md) | [Ελληνικά](./README_el.md) | [Magyar](./README_hu.md) | [עברית](./README_he.md) | [Norsk](./README_no.md) | [Dansk](./README_da.md) | [Suomi](./README_fi.md) | [Slovenčina](./README_sk.md) | [Slovenščina](./README_sl.md) | [Íslenska](./README_is.md)
 
 ---
+
+## 📑 目次
+- [🌍 多言語対応](#-多言語対応)
+- [🚀 主な機能と使用方法](#-主な機能と使用方法)
+- [⚙️ 設定とログ](#️-設定とログ)
+- [🖼️ スクリーンショット](#️-スクリーンショット)
+- [🎬 操作デモ](#-操作デモ)
+- [💻 システム要件](#-システム要件)
+- [📦 インストール指南](#-インストール指南)
+- [🛠️ 技術スタックとパフォーマンス](#️-技术スタックとパフォーマンス)
+- [📄 ライセンス](#-ライセンス)
+
+---
+
+## 🌍 多言語対応
+
+英語, 中国語 (簡体字), 中国語 (繁体字), ヒンディー語, スペイン語, フランス語, アラビア語, ベンガル語, ポルトガル語, ロシア語, ウルドゥー語, インドネシア語, ドイツ語, 日本語, トルコ語, 韓国語, イタリア語, オランダ語, スウェーデン語, チェコ語, ギリシャ語, ハンガリー語, ヘブライ語, ノルウェー語, デンマーク語, フィンランド語, スロバキア語, スロベニア語, アイスランド語
+
+<p align="left">
+  <img src="../assets/flags/us.svg" width="32" title="英語" alt="英語" />
+  <img src="../assets/flags/cn.svg" width="32" title="中国語 (簡体字)" alt="中国語 (簡体字)" />
+  <img src="../assets/flags/tw.svg" width="32" title="中国語 (繁体字)" alt="中国語 (繁体字)" />
+  <img src="../assets/flags/in.svg" width="32" title="ヒンディー語" alt="ヒンディー語" />
+  <img src="../assets/flags/es.svg" width="32" title="スペイン語" alt="スペイン語" />
+  <img src="../assets/flags/fr.svg" width="32" title="フランス語" alt="フランス語" />
+  <img src="../assets/flags/sa.svg" width="32" title="アラビア語" alt="アラビア語" />
+  <img src="../assets/flags/bd.svg" width="32" title="ベンガル語" alt="ベンガル語" />
+  <img src="../assets/flags/pt.svg" width="32" title="ポルトガル語" alt="ポルトガル語" />
+  <img src="../assets/flags/ru.svg" width="32" title="ロシア語" alt="ロシア語" />
+  <img src="../assets/flags/pk.svg" width="32" title="ウルドゥー語" alt="ウルドゥー語" />
+  <img src="../assets/flags/id.svg" width="32" title="インドネシア語" alt="インドネシア語" />
+  <img src="../assets/flags/de.svg" width="32" title="ドイツ語" alt="ドイツ語" />
+  <img src="../assets/flags/jp.svg" width="32" title="日本語" alt="日本語" />
+  <img src="../assets/flags/tr.svg" width="32" title="トルコ語" alt="トルコ語" />
+  <img src="../assets/flags/kr.svg" width="32" title="韓国語" alt="韓国語" />
+  <img src="../assets/flags/it.svg" width="32" title="イタリア語" alt="イタリア語" />
+  <img src="../assets/flags/nl.svg" width="32" title="オランダ語" alt="オランダ語" />
+  <img src="../assets/flags/se.svg" width="32" title="スウェーデン語" alt="スウェーデン語" />
+  <img src="../assets/flags/cz.svg" width="32" title="チェコ語" alt="チェコ語" />
+  <img src="../assets/flags/gr.svg" width="32" title="ギリシャ語" alt="ギリシャ語" />
+  <img src="../assets/flags/hu.svg" width="32" title="ハンガリー語" alt="ハンガリー語" />
+  <img src="../assets/flags/il.svg" width="32" title="ヘブライ語" alt="ヘブライ語" />
+  <img src="../assets/flags/no.svg" width="32" title="ノルウェー語" alt="ノルウェー語" />
+  <img src="../assets/flags/dk.svg" width="32" title="デンマーク語" alt="デンマーク語" />
+  <img src="../assets/flags/fi.svg" width="32" title="フィンランド語" alt="フィンランド語" />
+  <img src="../assets/flags/sk.svg" width="32" title="スロバキア語" alt="スロバキア語" />
+  <img src="../assets/flags/si.svg" width="32" title="スロベニア語" alt="スロベニア語" />
+  <img src="../assets/flags/is.svg" width="32" title="アイスランド語" alt="アイスランド語" />
+</p>
+
+
+## 🚀 主な機能と使用方法
+
+- **モダンなネイティブ UI**：直感的でダーク/ライトモードに対応した GUI、スムーズなアニメーション、**Skia** による高性能なレンダリング。
+- **システムトレイ統合**：システムトレイへの最小化をフルサポート（約 10MB RAM 使用）、ダブルクリックでの表示切り替え、多機能な右クリックメニュー。
+- **インテリジェントな起動**：Windows 起動時の自動開始、トレイへの最小化起動（`/silent` オプション）、終了時の自動シャットダウンを設定可能。
+- **包括的なインスタンス管理**：ワンクリックでの起動、停止、終了、登録解除。リアルタイムの状態監視と、ディスク使用量やファイル場所の詳細表示。
+- **ディストリビューション管理**：デフォルト設定、ディレクトリ移動（VHDX の別ドライブへの移行）、`.tar` / `.tar.gz` 形式でのエクスポートとクローン。
+- **クイック統合**：ターミナル、VS Code、ファイルエクスプローラーを即座に起動。作業ディレクトリのカスタマイズや起動スクリプトのフックに対応。
+- **スマートインストール**：Microsoft Store、GitHub、またはローカルファイル（RootFS/VHDX）からのインストール。RootFS ダウンロードヘルパーを内蔵。
+- **グローバルな安全性**：ミューテックスロックによる移行/バックアップの同時実行制御、削除時の Appx 自動クリーンアップ。
+- **超低メモリフットプリント**：効率を極限まで最適化。トレイ待機時は約 **10MB**、ウィンドウモードでも言語に応じ **18MB**（標準）〜 **38MB**（中日韓などの複雑なフォント）で動作。
+
+
+## ⚙️ 設定とログ
+
+すべての設定は「設定」ビューで管理されます：
+
+- 新しい WSL インスタンスのデフォルトインストール先を選択。
+- ログディレクトリとログレベル (Error / Warn / Info / Debug / Trace) の設定。
+- UI 言語の選択（またはシステム言語に従う）。
+- ダークモードの切り替え、および操作後に WSL を自動シャットダウンするかどうかの設定。
+- アップデート確認の頻度（毎日、毎週、隔週、毎月）の設定。
+- Windows 起動時の自動開始（パス自動修復機能付き）。
+- 起動時にシステムトレイへ最小化する設定。
+- 閉じるボタンで終了せずトレイに最小化する設定。
+
+ログファイルは指定されたディレクトリに書き込まれ、問題報告時に添付できます。
+
 
 ## 🖼️ スクリーンショット
 
@@ -42,27 +125,15 @@ I18N: [简体中文](./README_zh_CN.md) | [繁體中文](./README_zh_TW.md) | [E
 
 ![WSL Dashboard Demo](../assets/screenshot/demo.gif)
 
-## 🚀 主な機能
 
-- ダークモード対応とスムーズなアニメーションを備えた直感的な GUI。
-- すべての WSL ディストリビューションをワンクリックで管理（起動、停止、終了、登録解除）。
-- ディストリビューションのターミナル、VS Code、ファイルエクスプローラーへのクイックアクセス。
-- 包括的なディストリビューション設定：デフォルト設定、起動時の自動開始、およびカスタムディレクトリパス。
-- WSL インスタンスの状態をリアルタイムで監視および表示。
-- `.tar` または圧縮された `.tar.gz` アーカイブへのエクスポートとバックアップ。
-- バックアップや既存のディストリビューションからのインスタンスのインポートとクローン作成。
-- ディストリビューションを任意の指定ディレクトリに移動（VHDX 移行）して、C ドライブの容量を節約。
-- Microsoft Store または GitHub からのスマートなディストリビューション作成。
-- 手動インストール用の内蔵 RootFS ダウンロードヘルパー。
-- VHDX ファイルの場所、仮想ディスクサイズ、Linux 内の実ディスク使用量の詳細表示。
 
-## システム要件
+## 💻 システム要求
 
 - WSL が有効な Windows 10 または Windows 11（WSL 2 推奨）。
 - 少なくとも 1 つの WSL ディストリビューションがインストールされているか、新しいものをインストールする権限があること。
 - 64ビット CPU。複数のディストリビューションをスムーズに使用するために 4 GB 以上の RAM を推奨。
 
-## 📦 インストール
+## 📦 インストール指南
 
 ### 方法 1: ビルド済みバイナリをダウンロードする
 
@@ -92,77 +163,30 @@ Rust ツールチェーン (Rust 1.92+ 以降) がインストールされてい
      ```powershell
      cargo run
      ```
+   - 専用スクリプトを使用してリリースビルドを作成：
 
-   - 最適化されたリリースビルド：
-
-     ```powershell
-     cargo run --release
-     ```
-
-   - ビルドスクリプトを使用する場合 (推奨)：
-
-     > ビルドスクリプトには `x86_64-pc-windows-gnu` ツールチェーンが必要です。
+     > ビルドスクリプトには `x86_64-pc-windows-msvc` ツールチェーンが必要です。
 
      ```powershell
      .\build\scripts\build.ps1
      ```
 
-## 🧭 使用方法の概要
-
-- **既存のディストリビューションの管理**：メインビューから任意の WSL ディストリビューションを起動、停止、終了、登録解除、またはデフォルトに設定できます。
-- **ディストリビューションの設定**：自動起動の動作設定や、ターミナル/VS Code の起動ディレクトリをカスタマイズします。
-- **ツールの素早い起動**：ワンクリックでディストリビューションをターミナル、VS Code、またはファイルエクスプローラーで開きます。
-- **新しいインスタンスの作成**：Microsoft Store からのインストール、RootFS イメージのダウンロード、または既存のディストリビューションのクローン作成が可能です。
-- **バックアップと復元**：ディストリビューションを `.tar` / `.tar.gz` アーカイブとしてエクスポートし、後で、または別のマシンでインポートできます。
-- **ディストリビューションの移動**：ストレージ管理を改善するために、ディストリビューションを指定されたディレクトリに移動します。
-- **状態の監視**：WSL Dashboard の実行中、リアルタイムのディストリビューション状態とストレージ使用量を確認できます。
-
-## ⚙️ 設定とログ
-
-すべての設定は設定ビューで管理されます：
-
-- 新しい WSL インスタンスのデフォルトインストール先を選択。
-- ログディレクトリとログレベル (Error / Warn / Info / Debug / Trace) の設定。
-- UI 言語の選択（またはシステム言語に従う）。
-- ダークモードの切り替え、および操作後に WSL を自動シャットダウンするかどうかの設定。
-- アップデート確認の頻度（毎日、毎週、隔週、毎月）の設定。
-
-ログファイルは指定されたディレクトリに書き込まれ、問題報告時に添付できます。
 
 ## 🛠️ 技術スタックとパフォーマンス
 
 - **コア**: メモリ安全性とゼロコスト抽象化のために Rust で実装。
-- **UI フレームワーク**: Slint。モダンな GPU 加速 UI ツールキット（バックエンド: `winit`）。
-- **非同期ランタイム**: Tokio。高度に並列で非ブロッキングなシステムコマンドと I/O を実現。
-- **パフォーマンス**:
-  - **メモリ使用量**: 通常 60–80 MB 程度の RAM。
-  - **レスポンス**: ストリーミング技術によるほぼ瞬時の起動とリアルタイムの WSL 状態更新。
-  - **バイナリサイズ**: 最適化されたリリースビルドにより、単一のコンパクトな実行ファイルを生成。
+- **UI フレームワーク**: 高性能な **Skia** レンダリングバックエンドを備えた Slint。
+- **非同期ランタイム**: Tokio。非ブロッキングなシステムコマンドと I/O を実現。
+- **パフォーマンスハイライト**:
+  - **レスポンス**: ほぼ瞬時の起動とリアルタイムの WSL 状態監視。
+  - **効率性**: 超低リソース使用量（詳細は [主な機能](#-主な機能と使用方法) を参照）。
+  - **ポータビリティ**: 単一のコンパクトな実行ファイルを生成。
 
-## 🌍 多言語対応
 
-以下の言語で完全な国際化をサポートしています：
-
-| 言語 | コード | 絵文字 |
-| :--- | :---: | :---: |
-| 简体中文 | `zh-CN` | 🇨🇳 |
-| 繁體中文 | `zh-TW` | 🇭🇰 / 🇹🇼 |
-| 英語 | `en` | 🇺🇸 |
-| 日本語 | `ja` | 🇯🇵 |
-| フランス語 | `fr` | 🇫🇷 |
-| スペイン語 | `es` | 🇪🇸 |
-| ロシア語 | `ru` | 🇷🇺 |
-| ポルトガル語 | `pt` | 🇵🇹 |
-| ドイツ語 | `de` | 🇩🇪 |
-| イタリア語 | `it` | 🇮🇹 |
-| トルコ語 | `tr` | 🇹🇷 |
-| インドネシア語 | `id` | 🇮🇩 |
-| ヒンディー語 | `hi` | 🇮🇳 |
-| ベンガル語 | `bn` | 🇧🇩 |
 
 ## 📄 ライセンス
 
-このプロジェクトは GPL-3.0 の下でライセンスされています。詳細は [LICENSE](LICENSE) ファイルをご覧ください。
+このプロジェクトは GPL-3.0 の下でライセンスされています。詳細は [LICENSE](../LICENSE) ファイルをご覧ください。
 
 ---
 

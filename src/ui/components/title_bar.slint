@@ -1,5 +1,36 @@
-import { Theme, AppInfo } from "../theme.slint";
+import { Theme, AppInfo, AppI18n, LayoutConstants } from "../theme.slint";
 import { WindowControlButton } from "common.slint";
+
+component ThemeSwitch inherits Rectangle {
+    callback clicked;
+    width: 40px;
+    height: 100%;
+    Rectangle {
+        width: 32px;
+        height: 16px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        border-radius: 8px;
+        border-width: 1px;
+        border-color: Theme.switch_track_border;
+        background: transparent;
+        Rectangle {
+            x: Theme.dark_mode ? 18px : 2px;
+            y: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 6px;
+            background: Theme.switch_thumb;
+            animate x { duration: 150ms; }
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+}
 
 export component TitleBar inherits Rectangle {
     in property <string> title;
@@ -31,25 +62,39 @@ export component TitleBar inherits Rectangle {
         }
     }
 
-    HorizontalLayout {
-        padding-left: 42px;
-        alignment: space-between;
+    Rectangle {
+        height: 40px;
+        width: parent.width;
+
+        // Title and Version Area
         HorizontalLayout {
+            x: AppI18n.is-rtl ? (parent.width - self.width - 3px) : 3px;
+            padding-left: AppI18n.is-rtl ? 0 : 42px;
+            padding-right: AppI18n.is-rtl ? 42px : 0;
             spacing: 8px;
-            alignment: start;
-            padding-left: 3px;
+            alignment: AppI18n.is-rtl ? end : start;
+            width: parent.width - 150px; // Ensure it doesn't overlap with controls
+
+            if (AppI18n.is-rtl): Text {
+                text: "v" + AppInfo.version;
+                font-size: 11px * LayoutConstants.font-scale;
+                font-weight: 400;
+                font-family: Theme.default_font;
+                color: Theme.text_secondary;
+                vertical-alignment: center;
+            }
             Text {
                 text: title;
-                font-size: 13px;
+                font-size: 13px * LayoutConstants.font-scale;
                 font-weight: 500;
                 font-family: Theme.default_font;
                 color: Theme.text_primary;
                 vertical-alignment: center;
             }
-            // Version number
-            Text {
+
+            if (!AppI18n.is-rtl): Text {
                 text: "v" + AppInfo.version;
-                font-size: 11px;
+                font-size: 11px * LayoutConstants.font-scale;
                 font-weight: 400;
                 font-family: Theme.default_font;
                 color: Theme.text_secondary;
@@ -57,54 +102,50 @@ export component TitleBar inherits Rectangle {
             }
         }
 
+        // Controls Area (Theme Switch + Window Controls)
         HorizontalLayout {
-            alignment: end;
-            
-            // Theme switch - style adjustment
-            HorizontalLayout {
-                spacing: 8px;
-                padding-right: 7px;
-                alignment: center;
-                Rectangle {
-                    width: 32px;
-                    height: 16px;
-                    border-radius: 8px;
-                    border-width: 1px;
-                    border-color: Theme.switch_track_border;
-                    background: transparent;
-                    y: 12px;
-                    Rectangle {
-                        x: Theme.dark_mode ? 18px : 2px;
-                        y: 2px;
-                        width: 12px;
-                        height: 12px;
-                        border-radius: 6px;
-                        background: Theme.switch_thumb;
-                        animate x { duration: 150ms; }
-                    }
+            height: 100%;
+            x: AppI18n.is-rtl ? 0 : (parent.width - self.width);
+            padding-left: 0px;
+            padding-right: 0px;
+            spacing: 0px;
+            alignment: AppI18n.is-rtl ? start : end;
 
-                    TouchArea {
-                        clicked => {
-                            root.toggle_theme();
-                        }
-                    }
+            // Visual Order (Left to Right):
+            // LTR: Switch, Minimize, Close
+            // RTL: Close, Minimize, Switch
+
+            if (AppI18n.is-rtl): WindowControlButton {
+                text: "\u{E8BB}"; // Close
+                hover-color: #E81123;
+                clicked => {
+                    root.close();
+                }
+            }
+            if (!AppI18n.is-rtl): ThemeSwitch {
+                clicked => {
+                    root.toggle_theme();
                 }
             }
 
-            HorizontalLayout {
-                WindowControlButton {
-                    text: "\u{E921}";
-                    clicked => {
-                        root.minimize();
-                    }
+            // Minimize is always in the middle
+            WindowControlButton {
+                text: "\u{E921}"; // Minimize
+                clicked => {
+                    root.minimize();
                 }
+            }
 
-                WindowControlButton {
-                    text: "\u{E8BB}";
-                    hover-color: #E81123;
-                    clicked => {
-                        root.close();
-                    }
+            if (AppI18n.is-rtl): ThemeSwitch {
+                clicked => {
+                    root.toggle_theme();
+                }
+            }
+            if (!AppI18n.is-rtl): WindowControlButton {
+                text: "\u{E8BB}"; // Close
+                hover-color: #E81123;
+                clicked => {
+                    root.close();
                 }
             }
         }
